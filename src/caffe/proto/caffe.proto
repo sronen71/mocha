@@ -350,6 +350,8 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
+  optional bool rotate = 5 [default = false];
+  optional uint32 resize = 6 [default = 0];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -434,6 +436,8 @@ message DataParameter {
   // DEPRECATED. See TransformationParameter. Specify if we want to randomly mirror
   // data.
   optional bool mirror = 6 [default = false];
+  optional bool rotate = 10 [default = false];
+  optional uint32 resize =11 [default = 0];
 }
 
 // Message that stores parameters used by DropoutLayer
@@ -735,7 +739,6 @@ message V0LayerParameter {
   optional uint32 cropsize = 20 [default = 0];
   // For data layers, specify if we want to randomly mirror data.
   optional bool mirror = 21 [default = false];
-
   // The blobs containing the numeric parameters of the layer
   repeated BlobProto blobs = 50;
   // The ratio that is multiplied on the global learning rate. If you want to
