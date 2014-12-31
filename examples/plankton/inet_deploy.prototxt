@@ -1,0 +1,21 @@
+name: "CaffeNet"
+input: "data"
+input_dim: 440
+input_dim: 1
+input_dim: 256
+input_dim: 256
+layers {
+  name: "fc2"
+  type: INNER_PRODUCT
+  bottom: "data"
+  top: "fc2"
+  inner_product_param {
+    num_output: 2
+  }
+}
+layers {
+  name: "prob"
+  type: SOFTMAX
+  bottom: "fc2"
+  top: "prob"
+}

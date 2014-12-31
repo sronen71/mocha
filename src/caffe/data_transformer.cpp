@@ -24,44 +24,47 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   const bool mirror = param_.mirror();
   const Dtype scale = param_.scale();
   const bool rotate = param_.rotate();	
-  const Dtype resize = param_.resize();
+  const int resize = param_.resize();
 
   if (mirror && crop_size == 0) {
     LOG(FATAL) << "Current implementation requires mirror and crop_size to be "
                << "set at the same time.";
   }
+  Dtype* temp;
+  CHECK(resize) << "resize must be given";
+  temp= new Dtype [channels*resize*resize];
+  cv::Point2f pt(width/2., height/2.);
+  double angle=0;
+  if (rotate) {
+	  angle=Rand() % 360;
+  }
+  double rangle=angle/180.*M_PI;
+  int height1=ceil(height*abs(cos(rangle))+width*abs(sin(rangle)));
+  int width1=ceil(height*abs(sin(rangle))+width*abs(cos(rangle)));
+	    
+  double resize_scale=double(resize)/std::max(height1,width1);
+  if (resize_scale<1.0) {
+	  resize_scale=1.0;
+  } 
+  cv::Mat r( 2, 3,  cv::DataType<float>::type );
+  r = cv::getRotationMatrix2D(pt, angle, resize_scale);
+  r.at<float>(0,2) += (resize- width)/2;
+  r.at<float>(1,2) += (resize- height)/2;	    
+  for (int c = 0; c < channels; ++c) {
+	  cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
 
-  if (rotate && resize>0) {
-    cv::Point2f pt(width/2., height/2.);
-    double angle=Rand() % 360;
-    double rangle=angle/180.*M_PI;
-    int height1=ceil(height*abs(cos(rangle))+width*abs(sin(rangle)));
-    int width1=ceil(height*abs(sin(rangle))+width*abs(cos(rangle)));
-		    
-    double scale=double(resize)/std::max(height1,width1);
-    if (scale<1.0) {
-    	scale=1.0;
-    } 
-    cv::Mat r( 2, 3,  cv::DataType<float>::type );
-    r = cv::getRotationMatrix2D(pt, angle, scale);
-    r.at<float>(0,2) += width1/2 - width/2;
-    r.at<float>(1,2) += height1/2 - height/2;	    
-    for (int c = 0; c < channels; ++c) {
-	cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
-        
-	cv::Mat src(height, width,cv::DataType<Dtype>::type);
-	for (int h = 0; h < crop_size; ++h) {
-          for (int w = 0; w < crop_size; ++w) {
+	  cv::Mat src(height, width,cv::DataType<Dtype>::type);
+	  for (int h = 0; h < crop_size; ++h) {
+	    for (int w = 0; w < crop_size; ++w) {
 		int data_index = (c * height + h) * width + w;
 		Dtype datum_element = static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
 		src.at<Dtype>(h,w)=datum_element;
-	  }
-	}	  
-    	cv::warpAffine(src, dst, r, dst.size());  
-	for (int j = 0; j < resize*resize; ++j) {
-		transformed_data[j + batch_item_id * size+c*height*width] = dst.at<Dtype>(j);
-	}	
-     }
+	    }
+	  }	  
+	  cv::warpAffine(src, dst, r, dst.size());  
+	  for (int j = 0; j < resize*resize; ++j) {
+		temp[j+c*resize*resize] = dst.at<Dtype>(j);
+	  }	
   }
   if (crop_size) {
     CHECK(data.size()) << "Image cropping only support uint8 data";
@@ -122,6 +125,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
       }
     }
   }
+  delete[] temp;
 }
 
 template <typename Dtype>
