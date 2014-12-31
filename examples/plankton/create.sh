@@ -6,12 +6,13 @@ EXAMPLE=examples/plankton
 DATA=data/plankton
 TOOLS=build/tools
 
-TRAIN_DATA_ROOT=/home/sronen/plankton/train/train
-VAL_DATA_ROOT=/home/sronen/plankton/train/train
+TRAIN_DATA_ROOT=/home/sronen/plankton/train/
+VAL_DATA_ROOT=/home/sronen/plankton/train/
+TEST_DATA_ROOT=/home/sronen/plankton/test/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
-RESIZE=true # when using crops of 256x256
+RESIZE=FALSE # when using crops of 256x256
 if $RESIZE; then
   RESIZE_HEIGHT=48
   RESIZE_WIDTH=48
@@ -54,6 +55,18 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --gray \
     $VAL_DATA_ROOT \
     $DATA/val.txt \
+    $EXAMPLE/plankton_val_lmdb
+
+echo "Creating test lmdb..."
+
+GLOG_logtostderr=1 $TOOLS/convert_imageset \
+    --resize_height=$RESIZE_HEIGHT \
+    --resize_width=$RESIZE_WIDTH \
+    --shuffle \
+    --gray \
+    $TEST_DATA_ROOT \
+    $DATA/test.txt \
     $EXAMPLE/plankton_test_lmdb
+
 
 echo "Done."
