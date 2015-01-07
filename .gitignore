@@ -52,6 +52,7 @@ Makefile.config
 # 2. custom, and live on their own unless they're deliberated contributed
 data/*
 models/*
+data/plankton/*
 *.caffemodel
 *.solverstate
 *.binaryproto

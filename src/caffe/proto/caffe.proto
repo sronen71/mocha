@@ -352,6 +352,8 @@ message TransformationParameter {
   optional string mean_file = 4;
   optional bool rotate = 5 [default = false];
   optional uint32 resize = 6 [default = 0];
+
+  optional bool randsize = 13 [default = false];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -438,6 +440,7 @@ message DataParameter {
   optional bool mirror = 6 [default = false];
   optional bool rotate = 10 [default = false];
   optional uint32 resize =11 [default = 0];
+  optional bool squeeze =12 [ default = false];
 }
 
 // Message that stores parameters used by DropoutLayer
@@ -489,6 +492,7 @@ message HDF5DataParameter {
   optional string source = 1;
   // Specify the batch size.
   optional uint32 batch_size = 2;
+  optional bool randomize = 3 [default = false]; // randomize data
 }
 
 // Message that stores parameters used by HDF5OutputLayer

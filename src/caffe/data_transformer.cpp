@@ -16,15 +16,16 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
                                        Dtype* transformed_data) {
   const string& data = datum.data();
   const int channels = datum.channels();
-  const int height = datum.height();
-  const int width = datum.width();
-  const int size = datum.channels() * datum.height() * datum.width();
+  int height = datum.height();
+  int width = datum.width();
+  int size = datum.channels() * datum.height() * datum.width();
 
   const int crop_size = param_.crop_size();
   const bool mirror = param_.mirror();
   const Dtype scale = param_.scale();
   const bool rotate = param_.rotate();	
   const int resize = param_.resize();
+  const bool randsize = param_.randsize();	
 
   if (mirror && crop_size == 0) {
     LOG(FATAL) << "Current implementation requires mirror and crop_size to be "
@@ -39,17 +40,28 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 	  angle=Rand() % 360;
   }
   double rangle=angle/180.*M_PI;
-  int height1=ceil(height*abs(cos(rangle))+width*abs(sin(rangle)));
-  int width1=ceil(height*abs(sin(rangle))+width*abs(cos(rangle)));
+
+  int height1=(int)ceil(double(height)*fabs(cos(rangle))+double(width)*fabs(sin(rangle)));
+  int width1=(int)ceil(double(height)*fabs(sin(rangle))+double(width)*fabs(cos(rangle)));
 	    
   double resize_scale=double(resize)/std::max(height1,width1);
-  if (resize_scale<1.0) {
+  resize_scale=1.0/resize_scale;
+  if (randsize) {
+	  resize_scale=resize_scale*(1.0+((Rand() % 500)-250.0)/1000.0);
+  }
+/*
+  if (resize_scale>1.0) {
 	  resize_scale=1.0;
-  } 
+  }
+  */ 
   cv::Mat r( 2, 3,  cv::DataType<float>::type );
   r = cv::getRotationMatrix2D(pt, angle, resize_scale);
+
   r.at<float>(0,2) += (resize- width)/2;
-  r.at<float>(1,2) += (resize- height)/2;	    
+  r.at<float>(1,2) += (resize- height)/2;
+
+
+  //std::cout<< r <<std::endl;
   for (int c = 0; c < channels; ++c) {
 	  cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
 
@@ -66,6 +78,9 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 		temp[j+c*resize*resize] = dst.at<Dtype>(j);
 	  }	
   }
+  height=resize;
+  width=resize;
+  size=channels*resize*resize;
   if (crop_size) {
     CHECK(data.size()) << "Image cropping only support uint8 data";
     int h_off, w_off;
@@ -85,8 +100,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
             int data_index = (c * height + h + h_off) * width + w + w_off;
             int top_index = ((batch_item_id * channels + c) * crop_size + h)
                 * crop_size + (crop_size - 1 - w);
-            Dtype datum_element =
-                static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+            Dtype datum_element = temp[data_index];
             transformed_data[top_index] =
                 (datum_element - mean[data_index]) * scale;
           }
@@ -100,8 +114,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
             int top_index = ((batch_item_id * channels + c) * crop_size + h)
                 * crop_size + w;
             int data_index = (c * height + h + h_off) * width + w + w_off;
-            Dtype datum_element =
-                static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+            Dtype datum_element = temp[data_index];
             transformed_data[top_index] =
                 (datum_element - mean[data_index]) * scale;
           }
@@ -112,8 +125,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
     // we will prefer to use data() first, and then try float_data()
     if (data.size()) {
       for (int j = 0; j < size; ++j) {
-        Dtype datum_element =
-            static_cast<Dtype>(static_cast<uint8_t>(data[j]));
+        Dtype datum_element = temp[j];
         transformed_data[j + batch_item_id * size] =
             (datum_element - mean[j]) * scale;
 	//std::cout<<"mean: "<< mean[j]<< " "<<datum_element<< " "<<transformed_data[j+batch_item_id*size]<<std::endl;
