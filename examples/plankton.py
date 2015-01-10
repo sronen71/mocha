@@ -10,23 +10,28 @@ import csv
 caffe_root = '../'
 sys.path.insert(0,caffe_root+'python')
 
+def chunks(l, n):
+    """ Yield successive n-sized chunks from l.
+    """
+    for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
 
 SUBMIT=True
-
 if SUBMIT:
     TEST_DB="plankton/plankton_test_lmdb"
-    ENCODE_FILE="plankton/encode.txt"
+    ENCODE_FILE="/home/ubuntu/mocha/caffe/data/plankton/encode.txt"
     SUBMIT_FILE="plankton/submit.csv"
 else:
     TEST_DB='plankton/plankton_val_lmdb'
-MODEL_FILE='plankton/inet_deploy1.prototxt'
-PRETRAINED='plankton/inet_iter_15000.caffemodel'
+MODEL_FILE='plankton/inet_deploy6.prototxt'
+PRETRAINED='plankton/inet7.caffemodel'
 
 
 print "Try to create net..."
 net = caffe.Classifier(MODEL_FILE, PRETRAINED,
-	mean=np.load('plankton/mean.npy'),
-        image_dims=(48, 48))
+#	mean=np.load('plankton/mean.npy'),
+        image_dims=(66, 66))
 print "Created net"
 net.set_phase_test()
 net.set_mode_gpu()
@@ -49,7 +54,15 @@ with env.begin() as txn:
         #plt.imshow(img,cmap=cm.Greys_r)
         #plt.show()
     print "prediction, #images: ", len(images)    
-    predictions = net.predict(images,oversample=False)  # predict takes any number of images, and formats them for the Caffe net automatically
+    #predictions = net.predict(images,oversample=False)  # predict takes any number of images, and formats them for the Caffe net automatically
+    predictions=[]   
+    count=0
+    for chunk in chunks(images,len(images)/1): 
+        count+=1
+        print count
+        predictions1 = net.predict(chunk,oversample=False)  
+        predictions.extend(predictions1)
+
     if SUBMIT:
         import csv
         with open(ENCODE_FILE, 'rb') as csvfile:
@@ -61,9 +74,9 @@ with env.begin() as txn:
             writer=csv.writer(csvfile)
             writer.writerow(["image"]+encode)
             for i,predict in enumerate(predictions):
-                name=keys[i].split("R")[0]+".jpg"
+                name=(keys[i].split("."))[0]+".jpg"
+                name=name.split('_')[1]
                 print name
-                name=name.split("_")[1]
                 writer.writerow([name]+predict.tolist()) 
     
     else:

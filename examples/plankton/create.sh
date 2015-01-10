@@ -3,12 +3,12 @@
 # N.B. set the path to the imagenet train + val data dirs
 
 EXAMPLE=examples/plankton
-DATA=data/plankton
+DATA=/home/ubuntu/mocha/caffe/data/plankton
 TOOLS=build/tools
 
-TRAIN_DATA_ROOT=/home/sronen/plankton/train/
-VAL_DATA_ROOT=/home/sronen/plankton/train/
-TEST_DATA_ROOT=/home/sronen/plankton/test/
+TRAIN_DATA_ROOT=/home/ubuntu/plankton/train/
+VAL_DATA_ROOT=/home/ubuntu/plankton/train/
+TEST_DATA_ROOT=/home/ubuntu/plankton/test/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.
@@ -20,6 +20,7 @@ else
   RESIZE_HEIGHT=0
   RESIZE_WIDTH=0
 fi
+echo "RESIZE $RESIZE_HEIGHT $RESIZE_WIDTH"
 
 if [ ! -d "$TRAIN_DATA_ROOT" ]; then
   echo "Error: TRAIN_DATA_ROOT is not a path to a directory: $TRAIN_DATA_ROOT"
