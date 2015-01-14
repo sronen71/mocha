@@ -14,6 +14,12 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
                                        const Datum& datum,
                                        const Dtype* mean,
                                        Dtype* transformed_data) {
+
+  // SR: fix for  bug https://github.com/BVLC/caffe/issues/1430
+  Caffe::Phase phase_ = Caffe::phase(); 
+  // 
+ 
+  bool train_flag= (phase_ == Caffe::TRAIN);
   const string& data = datum.data();
   const int channels = datum.channels();
   int height = datum.height();
@@ -36,17 +42,13 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   temp= new Dtype [channels*resize*resize];
   cv::Point2f pt(width/2., height/2.);
   double angle=0;
-  if (rotate) {
+  if (train_flag && rotate) {
 	  angle=Rand() % 360;
   }
-  double rangle=angle/180.*M_PI;
-
-  int height1=(int)ceil(double(height)*fabs(cos(rangle))+double(width)*fabs(sin(rangle)));
-  int width1=(int)ceil(double(height)*fabs(sin(rangle))+double(width)*fabs(cos(rangle)));
 	    
-  double resize_scale=double(resize)/std::max(height1,width1);
-  resize_scale=1.0/resize_scale;
-  if (randsize) {
+  double resize_scale=std::max(height,width)/double(resize);
+ 
+  if (train_flag && randsize ) {
 	  resize_scale=resize_scale*(1.0+((Rand() % 500)-250.0)/1000.0);
   }
 /*
@@ -57,30 +59,45 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   cv::Mat r( 2, 3,  cv::DataType<float>::type );
   r = cv::getRotationMatrix2D(pt, angle, resize_scale);
 
-  r.at<float>(0,2) += (resize- width)/2;
-  r.at<float>(1,2) += (resize- height)/2;
+  r.at<float>(0,2) += float(width-resize)/2;
+  r.at<float>(1,2) += float(height-resize)/2;
 
 
   //std::cout<< r <<std::endl;
-  for (int c = 0; c < channels; ++c) {
-	  cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
+  if (resize*resize!=data.size() || angle != 0 || resize_scale!=1.0) {	
+	  for (int c = 0; c < channels; ++c) {
+		  cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
 
-	  cv::Mat src(height, width,cv::DataType<Dtype>::type);
-	  for (int h = 0; h < crop_size; ++h) {
-	    for (int w = 0; w < crop_size; ++w) {
+		  cv::Mat src(height, width,cv::DataType<Dtype>::type);
+		  for (int h = 0; h < height; ++h) {
+		    for (int w = 0; w < width; ++w) {
+			int data_index = (c * height + h) * width + w;
+			Dtype datum_element = static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
+			src.at<Dtype>(h,w)=datum_element;
+		    }
+		  }	  
+		   
+		  cv::warpAffine(src, dst, r, dst.size());  
+		  for (int j = 0; j < resize*resize; ++j) {
+			temp[j+c*resize*resize] = dst.at<Dtype>(j);
+		  }	
+	  }
+	  height=resize;
+	  width=resize;
+	  size=channels*resize*resize;
+  }
+  else {
+  	for (int c = 0; c < channels; ++c) {
+	  for (int h = 0; h < height; ++h) {
+	    for (int w = 0; w < width; ++w) {
 		int data_index = (c * height + h) * width + w;
 		Dtype datum_element = static_cast<Dtype>(static_cast<uint8_t>(data[data_index]));
-		src.at<Dtype>(h,w)=datum_element;
-	    }
-	  }	  
-	  cv::warpAffine(src, dst, r, dst.size());  
-	  for (int j = 0; j < resize*resize; ++j) {
-		temp[j+c*resize*resize] = dst.at<Dtype>(j);
-	  }	
+		temp[data_index] = datum_element;
+	    }	
+	  }
+	}
   }
-  height=resize;
-  width=resize;
-  size=channels*resize*resize;
+
   if (crop_size) {
     CHECK(data.size()) << "Image cropping only support uint8 data";
     int h_off, w_off;
@@ -128,7 +145,6 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
         Dtype datum_element = temp[j];
         transformed_data[j + batch_item_id * size] =
             (datum_element - mean[j]) * scale;
-	//std::cout<<"mean: "<< mean[j]<< " "<<datum_element<< " "<<transformed_data[j+batch_item_id*size]<<std::endl;
       }
     } else {
       for (int j = 0; j < size; ++j) {

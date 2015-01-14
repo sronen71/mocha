@@ -3,11 +3,11 @@ import random
 import h5py
 import numpy as np
 
-root="/home/sronen/plankton/train/"
+root="/home/shai/plankton/train/"
 fr=open('list.txt','r')
 ftrain=open('train.txt','w')
 fval=open('val.txt','w')
-random.seed(1)
+random.seed(2)
 plist=[]
 perm=[]
 for i,line in enumerate(fr):
@@ -15,11 +15,11 @@ for i,line in enumerate(fr):
     plist.append(line)
     perm.append(i)
 random.shuffle(perm)
-train_h5='/home/ubuntu/plankton/train.h5'
-val_h5="/home/ubuntu/plankton/val.h5"
+train_h5='/home/shai/plankton/train.h5'
+val_h5="/home/shai/plankton/val.h5"
 train_h5_names="train.h5.txt"
 val_h5_names="val.h5.txt"
-list_h5="/home/ubuntu/plankton/list.h5"
+list_h5="/home/shai/plankton/list.h5"
 
 with h5py.File(list_h5, 'r') as h5dat:
     X=h5dat['data'].value

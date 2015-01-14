@@ -3,12 +3,12 @@
 # N.B. set the path to the imagenet train + val data dirs
 
 EXAMPLE=examples/plankton
-DATA=/home/ubuntu/mocha/caffe/data/plankton
+DATA=/home/sronen/mocha/data/plankton
 TOOLS=build/tools
 
-TRAIN_DATA_ROOT=/home/ubuntu/plankton/train/
-VAL_DATA_ROOT=/home/ubuntu/plankton/train/
-TEST_DATA_ROOT=/home/ubuntu/plankton/test/
+TRAIN_DATA_ROOT=/home/sronen/plankton/train/
+VAL_DATA_ROOT=/home/sronen/plankton/train/
+TEST_DATA_ROOT=/home/sronen/plankton/test/
 
 # Set RESIZE=true to resize the images to 256x256. Leave as false if images have
 # already been resized using another tool.

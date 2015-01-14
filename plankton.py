@@ -30,7 +30,7 @@ else:
     TEST_DB='plankton/plankton_val_lmdb'
 
 MODEL_FILE='plankton/inet_deploy6.prototxt'
-PRETRAINED='plankton/inet_iter_50000.caffemodel'
+PRETRAINED='plankton/inet_iter_10000.caffemodel'
 
 
 print "Try to create net..."
@@ -93,6 +93,6 @@ with env.begin() as txn:
             nlabels[i,label]=1
             probs[i]=predictions[i,label]
         score=-np.mean(np.log(probs))
-        loss=metrics.log_loss(nlabels,predictions)
-        print "#predictions:",len(predictions),"loss",loss
-        #print "my score:", score
+        #loss=metrics.log_loss(nlabels,predictions,eps=1e-40)
+        #print "#predictions:",len(predictions),"loss",loss
+        print "log loss score:", score

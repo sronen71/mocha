@@ -10,11 +10,12 @@ layers {
     batch_size: 256
   }
   transform_param {
-    #rotate: true
+    rotate: true
     resize: 52
     crop_size: 48
     mirror: true
-    #randsize: true
+    randsize: true
+    mean_file: "examples/plankton/plankton_mean.binaryproto"
   }
 
   include: { phase: TRAIN }
@@ -30,13 +31,14 @@ layers {
     source: "examples/plankton/plankton_val_lmdb"
  #   source: "examples/plankton/plankton_train_lmdb"
     backend: LMDB
-    batch_size: 10
+    batch_size: 256
   }
   transform_param {
     rotate: false
     resize: 52
     crop_size: 48
     mirror: false
+    mean_file: "examples/plankton/plankton_mean.binaryproto"
   }
 
   include: { phase: TEST }
@@ -53,9 +55,8 @@ layers {
   weight_decay: 0
   convolution_param {
     num_output: 64
-    kernel_size: 6
+    kernel_size: 5
     stride: 1
-    pad: 1
     weight_filler {
      type: "gaussian"
      std: 0.001
@@ -97,9 +98,8 @@ layers {
   weight_decay: 0
   convolution_param {
     num_output: 128
-    kernel_size: 5
+    kernel_size: 4
     stride: 1
-    pad: 1
     weight_filler {
      type: "gaussian"
      std: 0.01
@@ -144,7 +144,6 @@ layers {
     num_output: 256
     kernel_size: 3
     stride: 1
-    pad: 1
     weight_filler {
      type: "gaussian"
      std: 0.01
@@ -165,32 +164,18 @@ layers {
 
 
 layers {
- name: "pool3"
- type: POOLING
- bottom: "conv3"
- top: "pool3"
- pooling_param {
-  pool: MAX
-  kernel_size: 2
-  stride: 2
-  }
-}
-
-
-layers {
   name: "conv4"
   type: CONVOLUTION
-  bottom: "pool3"
+  bottom: "conv3"
   top: "conv4"
   blobs_lr: 1
   blobs_lr: 2
   weight_decay: 1
   weight_decay: 0
   convolution_param {
-    num_output: 512
+    num_output: 256
     kernel_size: 3
     stride: 1
-    pad: 1
     weight_filler {
      type: "gaussian"
      std: 0.1
@@ -229,7 +214,6 @@ layers {
 #  dropout_param {
 #    dropout_ratio: 0.5
 #  }
-# include: { phase: TRAIN }
 #}
 
 
@@ -244,40 +228,56 @@ layers {
   weight_decay: 1
   weight_decay: 0
   inner_product_param {
-    num_output: 1024
+    num_output: 512
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.001
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.01
     }
   }
 }
 
+
 layers {
-  name: "fcrelu1"
-  type: RELU
-  bottom: "fc1"
-  top: "fc1"
+ name: "slice1"
+ type: SLICE
+ bottom: "fc1"
+ top: "fc1a"
+ top: "fc1b"
+ slice_param {
+ slice_dim: 1
+ slice_point: 256
+ }
 }
+
+layers {
+ name: "maxout1"
+ type: ELTWISE
+ bottom: "fc1a"
+ bottom: "fc1b"
+ top: "maxout1"
+ eltwise_param {
+ operation: MAX
+ }
+}
+
 layers {
   name: "drop1"
   type: DROPOUT
-  bottom: "fc1"
-  top: "fc1"
+  bottom: "maxout1"
+  top: "maxout1"
   dropout_param {
     dropout_ratio: 0.5
   }
-  include: { phase: TRAIN }
-
 }
 
 layers {
   name: "fc2"
   type: INNER_PRODUCT
-  bottom: "fc1"
+  bottom: "maxout1"
   top: "fc2"
   blobs_lr: 1
   blobs_lr: 2
@@ -287,37 +287,53 @@ layers {
     num_output: 512
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.001
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.01
     }
   }
 }
 
 layers {
-  name: "fcrelu2"
-  type: RELU
-  bottom: "fc2"
-  top: "fc2"
+ name: "slice2"
+ type: SLICE
+ bottom: "fc2"
+ top: "fc2a"
+ top: "fc2b"
+ slice_param {
+ slice_dim: 1
+ slice_point: 256
+ }
 }
+
+layers {
+ name: "maxout2"
+ type: ELTWISE
+ bottom: "fc2a"
+ bottom: "fc2b"
+ top: "maxout2"
+ eltwise_param {
+ operation: MAX
+ }
+}
+
 layers {
   name: "drop2"
   type: DROPOUT
-  bottom: "fc2"
-  top: "fc2"
+  bottom: "maxout2"
+  top: "maxout2"
   dropout_param {
     dropout_ratio: 0.5
   }
-  include: { phase: TRAIN }
 }
 
 
 layers {
   name: "fc3"
   type: INNER_PRODUCT
-  bottom: "fc2"
+  bottom: "maxout2"
   top: "fc3"
   blobs_lr: 1
   blobs_lr: 2
@@ -327,11 +343,11 @@ layers {
     num_output: 121
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.001
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.01
     }
   }
 }

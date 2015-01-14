@@ -40,8 +40,8 @@ def augment(image):
     return name,f
 
 def main():
-    ROOT_DIR="/home/ubuntu/plankton/train"
-    TEST_DIR="/home/ubuntu/plankton/test"
+    ROOT_DIR="/home/shai/plankton/train"
+    TEST_DIR="/home/shai/plankton/test"
     plist=[]
     tlist=[]
     elist=[]
@@ -50,8 +50,8 @@ def main():
     X_test=[]
     list_h5_names="list.h5.txt"
     test_h5_names="test.h5.txt"
-    list_h5="/home/ubuntu/plankton/list.h5"
-    test_h5="/home/ubuntu/plankton/test.h5"
+    list_h5="/home/shai/plankton/list.h5"
+    test_h5="/home/shai/plankton/test.h5"
     list_file="list.txt"
     test_file="test.txt"
     encode_file='encode.txt'
@@ -65,6 +65,7 @@ def main():
         X_test.append(scaling)
                 
     categories=listdir(op.join(ROOT_DIR))
+    categories.sort()
     for encode,category in enumerate(categories):
         elist.append(",".join([str(encode),category.split('/')[-1]]))
 

@@ -10,11 +10,10 @@ layers {
     batch_size: 256
   }
   transform_param {
-    #rotate: true
-    resize: 52
+    rotate: true
+    resize: 50
     crop_size: 48
     mirror: true
-    #randsize: true
   }
 
   include: { phase: TRAIN }
@@ -27,14 +26,14 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/plankton/plankton_val_lmdb"
- #   source: "examples/plankton/plankton_train_lmdb"
+ #   source: "examples/plankton/plankton_val_lmdb"
+    source: "examples/plankton/plankton_train_lmdb"
     backend: LMDB
-    batch_size: 10
+    batch_size: 256
   }
   transform_param {
     rotate: false
-    resize: 52
+    resize: 50
     crop_size: 48
     mirror: false
   }
@@ -53,16 +52,16 @@ layers {
   weight_decay: 0
   convolution_param {
     num_output: 64
-    kernel_size: 6
+    kernel_size: 3
     stride: 1
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.001
+     std: 0.01
     }
     bias_filler {
       type: "constant"
-      value : 0.1
+      value : -0.5
     }
   }
 } 
@@ -97,7 +96,7 @@ layers {
   weight_decay: 0
   convolution_param {
     num_output: 128
-    kernel_size: 5
+    kernel_size: 3
     stride: 1
     pad: 1
     weight_filler {
@@ -106,7 +105,7 @@ layers {
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0
     }
   }
 } 
@@ -132,10 +131,10 @@ layers {
 
 
 layers {
-  name: "conv3"
+  name: "conv3a"
   type: CONVOLUTION
   bottom: "pool2"
-  top: "conv3"
+  top: "conv3a"
   blobs_lr: 1
   blobs_lr: 2
   weight_decay: 1
@@ -151,23 +150,57 @@ layers {
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0
     }
   }
 } 
 
 layers {
-  name: "relu3"
+  name: "relu3a"
   type: RELU
-  bottom: "conv3"
-  top: "conv3"
+  bottom: "conv3a"
+  top: "conv3a"
 }
+
+layers {
+  name: "conv3b"
+  type: CONVOLUTION
+  bottom: "conv3a"
+  top: "conv3b"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 256
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+     type: "gaussian"
+     std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    } 
+  } 
+}
+
+
+layers {
+  name: "relu3b"
+  type: RELU
+  bottom: "conv3b"
+  top: "conv3b"
+}
+
 
 
 layers {
  name: "pool3"
  type: POOLING
- bottom: "conv3"
+ bottom: "conv3b"
  top: "pool3"
  pooling_param {
   pool: MAX
@@ -193,11 +226,11 @@ layers {
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.1
+     std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0
     }
   }
 } 
@@ -221,18 +254,6 @@ layers {
   }
 }
 
-#layers {
-#  name: "predrop"
-#  type: DROPOUT
-#  bottom: "pool4"
-#  top: "pool4"
-#  dropout_param {
-#    dropout_ratio: 0.5
-#  }
-# include: { phase: TRAIN }
-#}
-
-
 
 layers {
   name: "fc1"
@@ -244,14 +265,14 @@ layers {
   weight_decay: 1
   weight_decay: 0
   inner_product_param {
-    num_output: 1024
+    num_output: 512
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.005
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 1
     }
   }
 }
@@ -270,8 +291,6 @@ layers {
   dropout_param {
     dropout_ratio: 0.5
   }
-  include: { phase: TRAIN }
-
 }
 
 layers {
@@ -287,11 +306,11 @@ layers {
     num_output: 512
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.005
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 1
     }
   }
 }
@@ -310,7 +329,6 @@ layers {
   dropout_param {
     dropout_ratio: 0.5
   }
-  include: { phase: TRAIN }
 }
 
 
@@ -321,17 +339,17 @@ layers {
   top: "fc3"
   blobs_lr: 1
   blobs_lr: 2
-  weight_decay: 1
+  weight_decay: 5 # stronger decay
   weight_decay: 0
   inner_product_param {
     num_output: 121
     weight_filler {
       type: "gaussian"
-      std: 0.01
+      std: 0.005
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0
     }
   }
 }
