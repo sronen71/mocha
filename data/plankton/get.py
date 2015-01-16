@@ -11,19 +11,21 @@ import h5py
 import numpy as np
 
 def augment(image):
-    tsize=52
+    tsize=256
     img=cv2.imread(image,-1)
 
     img=cv2.bitwise_not(img)
     rows,cols = img.shape
     img1=img.copy()
 
-    rows1,cols1=img1.shape    
+    rows1,cols1=img1.shape   
+    actual_size=max(cols1,rows1)
     f=float(tsize)/max(cols1,rows1)
-    inter=cv2.cv.CV_INTER_AREA
+    #inter=cv2.cv.CV_INTER_AREA
+    inter=cv2.cv.CV_INTER_LINEAR
     if f>1.0:
-        #f=1.0
-        inter=cv2.cv.CV_INTER_CUBIC
+        f=1.0
+        #inter=cv2.cv.CV_INTER_CUBIC
     img1=cv2.resize(img1,(int(f*cols1),int(f*rows1)),interpolation=inter) 
     rows2,cols2=img1.shape        
     top=(tsize-rows2)//2
@@ -37,7 +39,7 @@ def augment(image):
     name=split1[0]+".png"
 
     cv2.imwrite(name,img1)
-    return name,f
+    return name,f,actual_size
 
 def main():
     ROOT_DIR="/home/shai/plankton/train"
@@ -58,24 +60,25 @@ def main():
     test_images=glob(op.join(TEST_DIR,"*.jpg"))
     for test_image  in test_images:
         print test_image
-        name,scaling=augment(test_image)
+        name,scaling,actual_size=augment(test_image)
 
         ti=name.split('/')[-1]
-        tlist.append(ti+" 0")
+        tlist.append(ti+" 0 "+str(actual_size))
         X_test.append(scaling)
                 
     categories=listdir(op.join(ROOT_DIR))
     categories.sort()
+
     for encode,category in enumerate(categories):
         elist.append(",".join([str(encode),category.split('/')[-1]]))
 
         images=glob(op.join(ROOT_DIR,category,'*.jpg'))
-
+        
         for image in images:
             print image
-            aug,scaling=augment(image)
+            aug,scaling,actual_size=augment(image)
             aug='/'.join(aug.split('/')[-2:])
-            plist.append(" ".join([aug,str(encode)]))
+            plist.append(" ".join([aug,str(encode),str(actual_size)]))
             X_train.append(scaling)
             Y_train.append(encode)
 

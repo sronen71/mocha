@@ -25,7 +25,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   int height = datum.height();
   int width = datum.width();
   int size = datum.channels() * datum.height() * datum.width();
-
+  int actual_size = datum.actual_size();
   const int crop_size = param_.crop_size();
   const bool mirror = param_.mirror();
   const Dtype scale = param_.scale();
@@ -46,24 +46,28 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 	  angle=Rand() % 360;
   }
 	    
-  double resize_scale=std::max(height,width)/double(resize);
+  if (actual_size> std::max(height,width)) {
+	  actual_size=std::max(height,width);
+  }
+  double resize_scale=double(resize)/double(actual_size);
  
   if (train_flag && randsize ) {
-	  resize_scale=resize_scale*(1.0+((Rand() % 500)-250.0)/1000.0);
+	  resize_scale=resize_scale*(1.0+((Rand() % 200)-100.0)/1000.0);
   }
 /*
   if (resize_scale>1.0) {
 	  resize_scale=1.0;
   }
   */ 
-  cv::Mat r( 2, 3,  cv::DataType<float>::type );
+  cv::Mat r( 2, 3,  cv::DataType<double>::type );
   r = cv::getRotationMatrix2D(pt, angle, resize_scale);
 
-  r.at<float>(0,2) += float(width-resize)/2;
-  r.at<float>(1,2) += float(height-resize)/2;
 
-
-  //std::cout<< r <<std::endl;
+  r.at<double>(0,2) -= double(width-resize)/2.0;
+  r.at<double>(1,2) -= double(height-resize)/2.0;
+  
+  //std::cout<<r<<std::endl;
+  
   if (resize*resize!=data.size() || angle != 0 || resize_scale!=1.0) {	
 	  for (int c = 0; c < channels; ++c) {
 		  cv::Mat dst(resize,resize,cv::DataType<Dtype>::type);
@@ -77,7 +81,8 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 		    }
 		  }	  
 		   
-		  cv::warpAffine(src, dst, r, dst.size());  
+		  cv::warpAffine(src, dst, r, dst.size()); 
+		  //std::cout<<dst<<std::endl; 
 		  for (int j = 0; j < resize*resize; ++j) {
 			temp[j+c*resize*resize] = dst.at<Dtype>(j);
 		  }	

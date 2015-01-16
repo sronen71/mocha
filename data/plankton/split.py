@@ -47,10 +47,10 @@ Ytrain=Y1[0:n1]
 Yval=Y1[n1:n2]
 
 for line in train:
-    info=' '.join(line.split()[0:2])+'\n'
+    info=' '.join(line.split()[0:3])+'\n'
     ftrain.write(info)
 for line in val:
-    info=' '.join(line.split()[0:2])+'\n'
+    info=' '.join(line.split()[0:3])+'\n'
     fval.write(info)
 fr.close()
 ftrain.close()
