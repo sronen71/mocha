@@ -1,69 +1,21 @@
 name: "CaffeNet"
-layers {
-  name: "data"
-  type: DATA
-  top: "data"
-  top: "label"
-  data_param {
-    source: "examples/plankton/plankton_train_lmdb"
-    backend: LMDB
-    batch_size: 256
-  }
-  transform_param {
-    rotate: true
-    resize: 64
-    crop_size: 56
-    mirror: true
-    randsize: true
-  }
+input: "data"
+input_dim: 256
+input_dim: 1
+input_dim: 56
+input_dim: 56
 
-  include: { phase: TRAIN }
-}
-
-
-layers {
-  name: "data"
-  type: DATA
-  top: "data"
-  top: "label"
-  data_param {
-    source: "examples/plankton/plankton_val_lmdb"
- #   source: "examples/plankton/plankton_train_lmdb"
-    backend: LMDB
-    batch_size: 10
-  }
-  transform_param {
-    rotate: false
-    resize: 64
-    crop_size: 56
-    mirror: false
-  }
-
-  include: { phase: TEST }
-}
 
 layers {
   name: "conv1"
   type: CONVOLUTION
   bottom: "data"
   top: "conv1"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   convolution_param {
     num_output: 64
     kernel_size: 5
     stride: 1
     pad: 2
-    weight_filler {
-     type: "gaussian"
-     std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value : 0.1
-    }
   }
 } 
 
@@ -78,23 +30,11 @@ layers {
   type: CONVOLUTION
   bottom: "conv1"
   top: "conv1b"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   convolution_param {
     num_output: 64
     kernel_size: 3
     stride: 1
     pad: 1
-    weight_filler {
-     type: "gaussian"
-     std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value : 0.1
-    }
   }
 } 
 
@@ -122,23 +62,11 @@ layers {
   type: CONVOLUTION
   bottom: "pool1"
   top: "conv2"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   convolution_param {
     num_output: 128
     kernel_size: 5
     stride: 1
     pad: 2
-    weight_filler {
-     type: "gaussian"
-     std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 } 
 
@@ -167,23 +95,11 @@ layers {
   type: CONVOLUTION
   bottom: "pool2"
   top: "conv3"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   convolution_param {
     num_output: 256
     kernel_size: 3
     stride: 1
     pad: 1
-    weight_filler {
-     type: "gaussian"
-     std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 } 
 
@@ -213,23 +129,11 @@ layers {
   type: CONVOLUTION
   bottom: "pool3"
   top: "conv4"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   convolution_param {
     num_output: 512
     kernel_size: 3
     stride: 1
     pad: 1
-    weight_filler {
-     type: "gaussian"
-     std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 } 
 
@@ -269,20 +173,8 @@ layers {
   type: INNER_PRODUCT
   bottom: "pool4x"
   top: "fc1"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   inner_product_param {
     num_output: 1024
-    weight_filler {
-      type: "gaussian"
-      std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 }
 
@@ -307,20 +199,8 @@ layers {
   type: INNER_PRODUCT
   bottom: "fc1"
   top: "fc2"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   inner_product_param {
     num_output: 512
-    weight_filler {
-      type: "gaussian"
-      std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 }
 
@@ -346,27 +226,14 @@ layers {
   type: INNER_PRODUCT
   bottom: "fc2"
   top: "fc3"
-  blobs_lr: 1
-  blobs_lr: 2
-  weight_decay: 1
-  weight_decay: 0
   inner_product_param {
     num_output: 121
-    weight_filler {
-      type: "gaussian"
-      std: 0.02
-    }
-    bias_filler {
-      type: "constant"
-      value: 0.1
-    }
   }
 }
 
 layers {
-  name: "loss"
-  type: SOFTMAX_LOSS
+  name: "prob"
+  type: SOFTMAX
   bottom: "fc3"
-  bottom: "label"
-  top: "loss"
+  top: "prob"
 }

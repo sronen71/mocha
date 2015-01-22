@@ -30,7 +30,7 @@ layers {
     source: "examples/plankton/plankton_val_lmdb"
  #   source: "examples/plankton/plankton_train_lmdb"
     backend: LMDB
-    batch_size: 256
+    batch_size: 10
   }
   transform_param {
     rotate: false
@@ -221,15 +221,15 @@ layers {
   }
 }
 
-layers {
-  name: "predrop"
-  type: DROPOUT
-  bottom: "pool4"
-  top: "pool4"
-  dropout_param {
-    dropout_ratio: 0.5
-  }
-}
+#layers {
+#  name: "predrop"
+#  type: DROPOUT
+#  bottom: "pool4"
+#  top: "pool4x"
+#  dropout_param {
+#    dropout_ratio: 0.5
+#  }
+#}
 
 
 

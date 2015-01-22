@@ -51,8 +51,14 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   }
   double resize_scale=double(resize)/double(actual_size);
  
+  double angle1=0;
+  double alpha=1;
+  double iscale=1; // pixel intensity scaling
   if (train_flag && randsize ) {
 	  resize_scale=resize_scale*(1.0+((Rand() % 200)-100.0)/1000.0);
+      angle1=Rand() % 360;
+      alpha=1+(double((Rand()%100))/1000.0);
+      iscale=1+(double((Rand()%100))/1000.0);  
   }
 /*
   if (resize_scale>1.0) {
@@ -60,11 +66,23 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   }
   */ 
   cv::Mat r( 2, 3,  cv::DataType<double>::type );
-  r = cv::getRotationMatrix2D(pt, angle, resize_scale);
+ 
+  cv::Mat r1( 2, 3,  cv::DataType<double>::type );
+  cv::Mat row = (cv::Mat_<double>(1,3) << 0,0,1);
+  r1 = cv::getRotationMatrix2D(pt, angle1,1);
+  //change aspect ratio
+  cv::Mat C = (cv::Mat_<double>(3,3) << alpha, 0, (1-alpha)*pt.x, 0,1, 0, 0,0,1); 
+  r1.push_back(row);
 
+  r = cv::getRotationMatrix2D(pt, angle,resize_scale);
+  r.push_back(row);
 
-  r.at<double>(0,2) -= double(width-resize)/2.0;
-  r.at<double>(1,2) -= double(height-resize)/2.0;
+  r=r*C*r1;  
+
+  cv::Mat m=r(cv::Range(0,2),cv::Range::all());
+
+  m.at<double>(0,2) -= double(width-resize)/2.0;
+  m.at<double>(1,2) -= double(height-resize)/2.0;
   
   //std::cout<<r<<std::endl;
   
@@ -81,10 +99,14 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 		    }
 		  }	  
 		   
-		  cv::warpAffine(src, dst, r, dst.size()); 
+		  cv::warpAffine(src, dst, m, dst.size()); 
 		  //std::cout<<dst<<std::endl; 
 		  for (int j = 0; j < resize*resize; ++j) {
-			temp[j+c*resize*resize] = dst.at<Dtype>(j);
+            double v=iscale*dst.at<Dtype>(j);
+            if (v>255) {
+                v=255;
+            }
+			temp[j+c*resize*resize] = int(v);
 		  }	
 	  }
 	  height=resize;

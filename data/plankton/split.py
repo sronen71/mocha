@@ -28,7 +28,7 @@ with h5py.File(list_h5, 'r') as h5dat:
     Y1 = Y[perm]
 
 plist = [ plist[i] for i in perm]
-frac=0.8
+frac=0.2
 n=int(len(plist)*frac)
 n1=(n//10)*10
 n2=(len(plist)/10)*10

@@ -15,19 +15,24 @@ sys.path.insert(0,caffe_root+'python')
 SUBMIT=True
 #SUBMIT=False
 
+oversample=True
+supersample=True
+
+#oversample=False
+#supersample=False
+
+tsize=64
+
+
 if SUBMIT:
     TEST_DB="plankton/plankton_test_lmdb"
-    ENCODE_FILE="/home/sronen/mocha/data/plankton/encode.txt"
     SUBMIT_FILE="plankton/submit.csv"
 else:
     TEST_DB='plankton/plankton_val_lmdb'
 
-MODEL_FILE='plankton/inet_deploy6.prototxt'
-PRETRAINED='plankton/inet_iter_30000.caffemodel'
-
-oversample=True
-supersample=True
-tsize=52
+ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
+MODEL_FILE='plankton/inet_deploy7.prototxt'
+PRETRAINED='plankton/inet_iter_35000.caffemodel'
 
 print "Try to create net..."
 net = caffe.Classifier(MODEL_FILE, PRETRAINED,
@@ -39,6 +44,26 @@ net.set_mode_gpu()
 
 env=lmdb.open(TEST_DB)
 datum = caffe.proto.caffe_pb2.Datum()
+
+def write_submit(filename,keys,predictions,labels=[]):
+    import csv
+    with open(ENCODE_FILE, 'rb') as csvfile:
+        reader = csv.reader(csvfile)
+        encode=[]
+        for row in reader:
+            encode.append(row[1])
+    with open(filename,'w') as csvfile:
+        writer=csv.writer(csvfile)
+        writer.writerow(["image"]+encode)
+        for i,predict in enumerate(predictions):
+            name=(keys[i].split("."))[0]+".jpg"
+            name=''.join(name.split('_')[1:])
+            row=[name]+predict.tolist()
+            if labels:
+                label=[str(labels[i])]
+                row=row+label
+            writer.writerow(row) 
+
 
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
@@ -83,7 +108,7 @@ def getimages(datum,angle=0,rescale=1.0):
             #plt.imshow(img1,cmap=cm.Greys_r)
             #plt.show()
         print "#images: ", len(images)    
-    return images,labels
+    return images,labels,keys
 
 
 if supersample:
@@ -104,7 +129,7 @@ for config in pre:
     angle=config[0]
     rescale=config[1]
     print "angle,rescale:", angle,rescale
-    images,labels=getimages(datum,angle,rescale)
+    images,labels,keys=getimages(datum,angle,rescale)
     if angle is 0:
         predcitions=np.zeros(len(images))
     predictions1=[]
@@ -115,28 +140,12 @@ for config in pre:
         predictions_chunk = net.predict(chunk,oversample=oversample)  
         predictions1.extend(predictions_chunk)
     predictions=predictions+predictions1
-
+    
 predictions=predictions/len(pre)
 
 
-
-
 if SUBMIT:
-    import csv
-    with open(ENCODE_FILE, 'rb') as csvfile:
-        reader = csv.reader(csvfile)
-        encode=[]
-        for row in reader:
-            encode.append(row[1])
-    with open(SUBMIT_FILE,'w') as csvfile:
-        writer=csv.writer(csvfile)
-        writer.writerow(["image"]+encode)
-        for i,predict in enumerate(predictions):
-            name=(keys[i].split("."))[0]+".jpg"
-            name=name.split('_')[1]
-            print name
-            writer.writerow([name]+predict.tolist()) 
-
+    write_submit(SUBMIT_FILE,keys,predictions)
 else:
     predictions=np.array(predictions)
     nlabels=np.zeros(predictions.shape)
@@ -149,3 +158,4 @@ else:
     print "log loss score:", score
 
     print "regularized score:",loss
+    write_submit('val.csv',keys,predictions,labels)
