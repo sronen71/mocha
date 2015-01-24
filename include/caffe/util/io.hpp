@@ -89,17 +89,25 @@ inline void WriteProtoToBinaryFile(
   WriteProtoToBinaryFile(proto, filename.c_str());
 }
 
+
 bool ReadImageToDatum(const string& filename, const int label,
-    const int height, const int width, const bool is_color, Datum* datum);
+    const int height, const int width, const int actual_size, const bool is_color, Datum* datum);
+ 
+
+inline bool ReadImageToDatum(const string& filename, const int label,
+    const int height, const int width, const bool is_color, Datum* datum) {
+  return ReadImageToDatum(filename,label,height,width,0,is_color,datum);
+}
+
 
 inline bool ReadImageToDatum(const string& filename, const int label,
     const int height, const int width, Datum* datum) {
-  return ReadImageToDatum(filename, label, height, width, true, datum);
+  return ReadImageToDatum(filename, label, height, width, 0,true, datum);
 }
 
 inline bool ReadImageToDatum(const string& filename, const int label,
     Datum* datum) {
-  return ReadImageToDatum(filename, label, 0, 0, datum);
+  return ReadImageToDatum(filename, label, 0, 0, 0,datum);
 }
 
 leveldb::Options GetLevelDBOptions();
