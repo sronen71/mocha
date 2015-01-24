@@ -14,7 +14,7 @@ weight_decay: 0.0005
 
 lr_policy: "step"
 gamma: 0.1
-stepsize: 15000 #20000
+stepsize: 20000 #20000
 # Display every # iterations
 display: 500 # every 8xepoch
 # The maximum number of iterations

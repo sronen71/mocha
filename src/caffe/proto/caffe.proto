@@ -355,6 +355,7 @@ message TransformationParameter {
   optional uint32 resize = 6 [default = 0];
 
   optional bool randsize = 13 [default = false];
+  optional bool distort = 14 [default=false];
 }
 
 // Message that stores parameters used by AccuracyLayer

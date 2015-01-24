@@ -6,8 +6,46 @@
 #include <opencv2/opencv.hpp>
 #include <cmath>
 #include <algorithm>
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <array>
 namespace caffe {
+
+
+template<typename Dtype>
+
+// Load distortion fields
+
+// $TODO(SR): Since there are two live DataTransformer instances (for train and test),
+// the mField consumes double memory. The distortion fields may be rather loaded once at higher level.
+
+void DataTransformer<Dtype>::LoadFields() {
+    std::string path="/home/shai/plankton/fields/";
+
+    std::array<double,256*256>  buffer{};
+    for (int k=0;k<4000;++k) {
+        
+        std::string file_name=path+"field"+std::to_string(k)+".fld";
+        std::ifstream myfile(file_name,std::ifstream::binary | std::ios::in);
+        if (!myfile) {
+            std::cerr << "Cannot open the file" << std::endl;
+            exit(1);
+        }
+        myfile.read(reinterpret_cast<char *>(&buffer[0]),256*256*sizeof(double));
+        mField.push_back(buffer);
+    }
+}
+
+template<typename Dtype>
+DataTransformer<Dtype>::DataTransformer (const TransformationParameter& param) 
+    : param_(param) {
+    phase_ = Caffe::phase();
+
+    if (param_.distort()) {
+        LoadFields();
+    }
+}
 
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const int batch_item_id,
@@ -32,11 +70,13 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   const bool rotate = param_.rotate();	
   const int resize = param_.resize();
   const bool randsize = param_.randsize();	
+  const bool distort = param_.distort();
 
   if (mirror && crop_size == 0) {
     LOG(FATAL) << "Current implementation requires mirror and crop_size to be "
                << "set at the same time.";
   }
+
   Dtype* temp;
   CHECK(resize) << "resize must be given";
   temp= new Dtype [channels*resize*resize];
@@ -52,13 +92,17 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   double resize_scale=double(resize)/double(actual_size);
  
   double angle1=0;
-  double alpha=1;
+  double angle2=0;
+  double alpha=1; // aspect ratio
+  double shear=0;
   double iscale=1; // pixel intensity scaling
   if (train_flag && randsize ) {
-	  resize_scale=resize_scale*(1.0+((Rand() % 200)-100.0)/1000.0);
+	  resize_scale=resize_scale*(1.0+((Rand() % 300)-150.0)/1000.0);
       angle1=Rand() % 360;
-      alpha=1+(double((Rand()%100))/1000.0);
-      iscale=1+(double((Rand()%100))/1000.0);  
+      angle2=Rand()% 360;
+      alpha=1+(double((Rand()%300)-150.0)/1000.0);
+      iscale=1+(double((Rand()%300-150.0))/1000.0);  
+      shear=double(Rand()%300-150.0)/1000.0;
   }
 /*
   if (resize_scale>1.0) {
@@ -74,10 +118,18 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   cv::Mat C = (cv::Mat_<double>(3,3) << alpha, 0, (1-alpha)*pt.x, 0,1, 0, 0,0,1); 
   r1.push_back(row);
 
+
+  // Shear
+  cv::Mat r2(2,3,cv::DataType<double>::type);
+  r2=cv::getRotationMatrix2D(pt,angle2,1);
+  r2.push_back(row);
+  cv::Mat S = (cv::Mat_<double>(3,3) << 1, shear, -shear*pt.y, 0,1, 0, 0,0,1); 
+  
+
   r = cv::getRotationMatrix2D(pt, angle,resize_scale);
   r.push_back(row);
 
-  r=r*C*r1;  
+  r=r*S*r2*C*r1;  
 
   cv::Mat m=r(cv::Range(0,2),cv::Range::all());
 
@@ -98,8 +150,32 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 			src.at<Dtype>(h,w)=datum_element;
 		    }
 		  }	  
-		   
-		  cv::warpAffine(src, dst, m, dst.size()); 
+
+          if (distort && Rand()) {
+            int i1=Rand()%4000;
+            int i2=Rand()%4000;
+            if (i2==i1) {
+                i2= (i2+1) % 4000;
+            }
+
+            cv::Mat dst1(height,width,cv::DataType<Dtype>::type);  
+            int distort_strength=Rand() % 5;
+            cv::Mat mapx(256,256,CV_32FC1);
+            cv::Mat mapy(256,256,CV_32FC1);
+            for (int i=0;i<256;i++) { //rows
+                for (int j=0;j<256;j++) { //cols
+                    mapx.at<float>(i,j)=j+mField.at(i1)[i*256+j]*distort_strength;
+                    mapy.at<float>(i,j)=i+mField.at(i2)[i*256+j]*distort_strength;
+                }
+            }
+            cv::remap(src,dst1,mapx,mapy,cv::INTER_LINEAR);
+	        cv::warpAffine(dst1, dst, m, dst.size()); 
+          }
+
+          else {
+    		  cv::warpAffine(src, dst, m, dst.size()); 
+          }
+
 		  //std::cout<<dst<<std::endl; 
 		  for (int j = 0; j < resize*resize; ++j) {
             double v=iscale*dst.at<Dtype>(j);

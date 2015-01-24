@@ -3,6 +3,9 @@
 
 #include "caffe/common.hpp"
 #include "caffe/proto/caffe.pb.h"
+#include <vector>
+#include <array>
+#include <opencv2/opencv.hpp>
 
 namespace caffe {
 
@@ -13,10 +16,7 @@ namespace caffe {
 template <typename Dtype>
 class DataTransformer {
  public:
-  explicit DataTransformer(const TransformationParameter& param)
-    : param_(param) {
-    phase_ = Caffe::phase();
-  }
+  explicit DataTransformer(const TransformationParameter& param);
   virtual ~DataTransformer() {}
 
   void InitRand();
@@ -37,19 +37,24 @@ class DataTransformer {
    */
   void Transform(const int batch_item_id, const Datum& datum,
                  const Dtype* mean, Dtype* transformed_data);
-
+  void LoadFields();  
  protected:
   virtual unsigned int Rand();
 
   // Tranformation parameters
   TransformationParameter param_;
-
+  
 
   shared_ptr<Caffe::RNG> rng_;
   Caffe::Phase phase_;
+  std::vector<std::array<double,256*256>> mField{};
+
+
 };
 
 }  // namespace caffe
+
+
 
 #endif  // CAFFE_DATA_TRANSFORMER_HPP_
 
