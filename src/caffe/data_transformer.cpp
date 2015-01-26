@@ -41,10 +41,11 @@ template<typename Dtype>
 DataTransformer<Dtype>::DataTransformer (const TransformationParameter& param) 
     : param_(param) {
     phase_ = Caffe::phase();
-
+/*
     if (param_.distort()) {
         LoadFields();
     }
+*/
 }
 
 template<typename Dtype>
@@ -97,12 +98,12 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   double shear=0;
   double iscale=1; // pixel intensity scaling
   if (train_flag && randsize ) {
-	  resize_scale=resize_scale*(1.0+((Rand() % 300)-150.0)/1000.0);
+	  resize_scale=resize_scale*(1.0+((Rand() % 400)-200.0)/1000.0);
       angle1=Rand() % 360;
       angle2=Rand()% 360;
-      alpha=1+(double((Rand()%300)-150.0)/1000.0);
-      iscale=1+(double((Rand()%300-150.0))/1000.0);  
-      shear=double(Rand()%300-150.0)/1000.0;
+      alpha=1+(double((Rand()%400)-200.0)/1000.0);
+      iscale=1+(double((Rand()%400-200.0))/1000.0);  
+      shear=double(Rand()%400-200.0)/1000.0;
   }
 /*
   if (resize_scale>1.0) {
@@ -151,29 +152,34 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 		    }
 		  }	  
 
-          if (distort && Rand()) {
-            int i1=Rand()%4000;
-            int i2=Rand()%4000;
-            if (i2==i1) {
-                i2= (i2+1) % 4000;
-            }
+          if (distort && (Rand() % 5)) {
 
             cv::Mat dst1(height,width,cv::DataType<Dtype>::type);  
-            int distort_strength=Rand() % 5;
             cv::Mat mapx(256,256,CV_32FC1);
             cv::Mat mapy(256,256,CV_32FC1);
+	    double norm=64*64/10;
+	    double axx= (Rand()% 200-100.0)/100.0/norm;
+	    double axy= (Rand()% 200-100.0)/100.0/norm;
+	    double ayy= (Rand()% 200-100.0)/100.0/norm;
+
+	    double bxx= (Rand()% 200-100.0)/100.0/norm;
+	    double bxy= (Rand()% 200-100.0)/100.0/norm;
+	    double byy= (Rand()% 200-100.0)/100.0/norm;
+	    	
             for (int i=0;i<256;i++) { //rows
                 for (int j=0;j<256;j++) { //cols
-                    mapx.at<float>(i,j)=j+mField.at(i1)[i*256+j]*distort_strength;
-                    mapy.at<float>(i,j)=i+mField.at(i2)[i*256+j]*distort_strength;
+		    double jc=j-128;
+	            double ic=i-128;	    
+                    mapx.at<float>(i,j)=j+(axx*jc*jc+2*axy*jc*ic+ayy*ic*ic);
+                    mapy.at<float>(i,j)=i+(bxx*ic*ic+2*bxy*jc*ic+byy*jc*jc);
                 }
             }
-            cv::remap(src,dst1,mapx,mapy,cv::INTER_LINEAR);
-	        cv::warpAffine(dst1, dst, m, dst.size()); 
+            cv::remap(src,dst1,mapx,mapy,cv::INTER_CUBIC);
+	        cv::warpAffine(dst1, dst, m, dst.size(),cv::INTER_CUBIC);
           }
 
           else {
-    		  cv::warpAffine(src, dst, m, dst.size()); 
+    		  cv::warpAffine(src, dst, m, dst.size(),cv::INTER_CUBIC); 
           }
 
 		  //std::cout<<dst<<std::endl; 
