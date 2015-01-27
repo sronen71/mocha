@@ -12,8 +12,8 @@ import cv2
 
 caffe_root = '../'
 sys.path.insert(0,caffe_root+'python')
-#SUBMIT=True
-SUBMIT=False
+SUBMIT=True
+#SUBMIT=False
 
 oversample=True
 supersample=True
@@ -21,7 +21,7 @@ supersample=True
 #oversample=False
 #supersample=False
 
-tsize=64
+tsize=90 # 64
 
 
 if SUBMIT:
@@ -31,9 +31,8 @@ else:
     TEST_DB='plankton/plankton_val_lmdb'
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
-MODEL_FILE='plankton/inet_deploy7.prototxt'
-#PRETRAINED='plankton/inet_iter_35000.caffemodel'
-PRETRAINED='plankton/inet_iter_40000.caffemodel'
+MODEL_FILE='plankton/inet_deploy8.prototxt'
+PRETRAINED='plankton/inet8.caffemodel'
 
 
 
@@ -92,13 +91,16 @@ def getimages(datum,angle=0,rescale=1.0):
             actual_size=datum.actual_size
             if actual_size>arr.shape[0]:
                 actual_size=arr.shape[0]    
-            inter=cv2.cv.CV_INTER_LINEAR
+            #inter=cv2.cv.CV_INTER_LINEAR
+            inter=cv2.cv.CV_INTER_CUBIC | cv2.cv.CV_INTER_CUBIC
+
             f=float(tsize)/actual_size*rescale
             img=np.squeeze(arr)
             M=cv2.getRotationMatrix2D((h/2,h/2),angle,f)
             M[0][2]-=(h-tsize)/2
             M[1][2]-=(h-tsize)/2
-            img1 = cv2.warpAffine(img,M,(tsize,tsize))
+            img1 = cv2.warpAffine(img,M,(tsize,tsize),flags=inter)
+
             #img1=cv2.resize(img,(0,0),fx=f,fy=f,interpolation=inter)
             #l=(img1.shape[0]-tsize)/2
             #img1=img1[l:l+tsize,l:l+tsize]
