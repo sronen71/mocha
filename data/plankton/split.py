@@ -7,6 +7,7 @@ root="/home/shai/plankton/train/"
 fr=open('list.txt','r')
 ftrain=open('train.txt','w')
 fval=open('val.txt','w')
+ffulltrain=open('fulltrain.txt','w')
 random.seed(2)
 plist=[]
 perm=[]
@@ -52,8 +53,14 @@ for line in train:
 for line in val:
     info=' '.join(line.split()[0:3])+'\n'
     fval.write(info)
+
+for line in plist:
+    info=' '.join(line.split()[0:3])+'\n'
+    ffulltrain.write(info)
+
 fr.close()
 ftrain.close()
+ffulltrain.close()
 fval.close()
 with h5py.File(train_h5, 'w') as f:
     f['data'] = Xtrain

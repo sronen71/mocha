@@ -58,10 +58,12 @@ template <typename Dtype>
 void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     vector<Blob<Dtype>*>* bottom) {
+   /* 
   if (propagate_down[1]) {
-    LOG(FATAL) << this->type_name()
+    LOG(WARNING) << this->type_name()
                << " Layer cannot backpropagate to label inputs.";
   }
+    */
   if (propagate_down[0]) {
     Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
     const Dtype* prob_data = prob_.cpu_data();

@@ -73,6 +73,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
                                        &available_blobs, &blob_name_to_idx);
       // If a blob needs backward, this layer should provide it.
       need_backward |= blob_need_backward_[blob_id];
+      //std::cout<<"need_Backward:"<<layer_param.name()<<" "<<blob_id<<" "<<blob_need_backward_[blob_id]<<std::endl;
     }
     int num_top = layer_param.top_size();
     for (int top_id = 0; top_id < num_top; ++top_id) {
@@ -148,6 +149,7 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
     if (need_backward) {
       for (int top_id = 0; top_id < top_id_vecs_[layer_id].size(); ++top_id) {
         blob_need_backward_[top_id_vecs_[layer_id][top_id]] = true;
+        std::cout<<"set blob_need_backward "<<layer_id<<" "<<top_id_vecs_[layer_id][top_id]<<std::endl;
       }
     }
   }
@@ -166,6 +168,17 @@ void Net<Dtype>::Init(const NetParameter& in_param) {
       }
     }
     if (!layer_contributes_loss) { layer_need_backward_[layer_id] = false; }
+
+    // hack: special argmax
+    if (layer_names_[layer_id]=="argmax") {
+      layer_need_backward_[layer_id]=false;  
+      for (int top_id = 0; top_id < top_id_vecs_[layer_id].size(); ++top_id) {
+        blob_need_backward_[top_id_vecs_[layer_id][top_id]] = false;
+        std::cout<<"no backward: "<<layer_id<<" "<<top_id_vecs_[layer_id][top_id]<<std::endl;
+      }
+    }
+ 
+
     if (layer_need_backward_[layer_id]) {
       LOG(INFO) << layer_names_[layer_id] << " needs backward computation.";
     } else {
@@ -396,6 +409,7 @@ int Net<Dtype>::AppendBottom(const NetParameter& param,
   bottom_id_vecs_[layer_id].push_back(blob_id);
   available_blobs->erase(blob_name);
   const bool need_backward = blob_need_backward_[blob_id];
+  std::cout<<"blob need backward: "<<layer_id<<" "<<blob_id<<" "<<need_backward<<std::endl;
   bottom_need_backward_[layer_id].push_back(need_backward);
   return blob_id;
 }
@@ -570,25 +584,25 @@ void Net<Dtype>::BackwardFromTo(int start, int end) {
   for (int i = start; i >= end; --i) {
     if (layer_need_backward_[i]) {
       layers_[i]->Backward(
-          top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
-      if (debug_info_) { BackwardDebugInfo(i); }
+              top_vecs_[i], bottom_need_backward_[i], &bottom_vecs_[i]);
+          if (debug_info_) { BackwardDebugInfo(i); }
+        }
+      }
     }
-  }
-}
 
-template <typename Dtype>
-void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
-  for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
-    const Blob<Dtype>& blob = *top_vecs_[layer_id][top_id];
-    const string& blob_name = blob_names_[top_id_vecs_[layer_id][top_id]];
-    const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
-    LOG(INFO) << "    [Forward] "
-       << "Layer " << layer_names_[layer_id] << ", top blob " << blob_name
-       << " data: " << data_abs_val_mean;
-  }
-}
+    template <typename Dtype>
+    void Net<Dtype>::ForwardDebugInfo(const int layer_id) {
+      for (int top_id = 0; top_id < top_vecs_[layer_id].size(); ++top_id) {
+        const Blob<Dtype>& blob = *top_vecs_[layer_id][top_id];
+        const string& blob_name = blob_names_[top_id_vecs_[layer_id][top_id]];
+        const Dtype data_abs_val_mean = blob.asum_data() / blob.count();
+        LOG(INFO) << "    [Forward] "
+           << "Layer " << layer_names_[layer_id] << ", top blob " << blob_name
+           << " data: " << data_abs_val_mean;
+      }
+    }
 
-template <typename Dtype>
+    template <typename Dtype>
 void Net<Dtype>::BackwardDebugInfo(const int layer_id) {
   const vector<Blob<Dtype>*>& bottom_vec = bottom_vecs_[layer_id];
   for (int bottom_id = 0; bottom_id < bottom_vec.size(); ++bottom_id) {

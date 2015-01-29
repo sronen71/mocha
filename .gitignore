@@ -53,6 +53,7 @@ Makefile.config
 data/*
 models/*
 data/plankton/*
+examples/plankton/*
 *.caffemodel
 *.solverstate
 *.binaryproto

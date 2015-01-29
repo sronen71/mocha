@@ -36,6 +36,20 @@ if [ ! -d "$VAL_DATA_ROOT" ]; then
   exit 1
 fi
 
+echo "creating full train lmdb..."
+
+GLOG_logtostderr=1 $TOOLS/convert_imageset \
+    --resize_height=$RESIZE_HEIGHT \
+    --resize_width=$RESIZE_WIDTH \
+    --shuffle \
+    --gray \
+    $TRAIN_DATA_ROOT \
+    $DATA/fulltrain.txt \
+    $EXAMPLE/plankton_full_lmdb
+
+
+
+
 echo "Creating train lmdb..."
 
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
@@ -68,6 +82,4 @@ GLOG_logtostderr=1 $TOOLS/convert_imageset \
     $TEST_DATA_ROOT \
     $DATA/test.txt \
     $EXAMPLE/plankton_test_lmdb
-
-
 echo "Done."

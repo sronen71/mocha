@@ -23,12 +23,13 @@ if SUBMIT:
     TEST_DB="plankton_test_lmdb"
     FEATURES_FILE="test_features.npz"
 else:
-    TEST_DB='plankton_val_lmdb'
+#    TEST_DB='plankton_val_lmdb'
+    TEST_DB='plankton_train_lmdb'
     FEATURES_FILE="val_features.npz"
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
 MODEL_FILE='inet_deploy8.prototxt'
-PRETRAINED='inet8.caffemodel'
+PRETRAINED='inet9.caffemodel'
 
 
 
@@ -42,6 +43,19 @@ net.set_mode_gpu()
 
 env=lmdb.open(TEST_DB)
 datum = caffe.proto.caffe_pb2.Datum()
+
+def visualize(features):
+    model=TSNE(n_components=2,random_state=0)       
+    X=model.fit_transform(features)
+    print X.shape
+    fig, ax =plt.subplots()
+    ax.scatter(X[:,0],X[:,1],c=labels)
+    for i,txt in enumerate(labels):
+        ax.annotate(txt, (X[i,0], X[i,1]))
+
+    plt.show()
+ 
+
 def chunks(l, n):
     """ Yield successive n-sized chunks from l.
     """
@@ -73,8 +87,9 @@ def getimages(datum,angle=0,rescale=1.0):
             M=cv2.getRotationMatrix2D((h/2,h/2),angle,f)
             M[0][2]-=(h-tsize)/2
             M[1][2]-=(h-tsize)/2
+            img=img.astype(np.float32)
             img1 = cv2.warpAffine(img,M,(tsize,tsize),flags=inter)
-
+            img1=img1.astype(np.int)
             arr=img1[:,:,None]
             images.append(arr.astype(np.float32)) # python wrapper needs float32, e.g for resize
             labels.append(datum.label)
@@ -119,17 +134,7 @@ for config in pre:
     features=np.array(features)
     features=features[:len(images),:]
     features = np.asfarray( features, dtype='float' )
-    '''    
-    model=TSNE(n_components=2,random_state=0)       
-    X=model.fit_transform(features)
-    print X.shape
-    fig, ax =plt.subplots()
-    ax.scatter(X[:,0],X[:,1],c=labels)
-    for i,txt in enumerate(labels):
-        ax.annotate(txt, (X[i,0], X[i,1]))
-
-    plt.show()
-    '''
+    #visualize(features)
     np.savez(FEATURES_FILE,features,labels)
 
     
