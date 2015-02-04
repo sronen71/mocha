@@ -15,11 +15,11 @@ sys.path.insert(0,caffe_root+'python')
 #SUBMIT=True
 SUBMIT=False
 
-#oversample=True
-#supersample=True
+oversample=True
+supersample=True
 
-oversample=False
-supersample=False
+#oversample=False
+#supersample=False
 
 tsize=64 # 64
 
@@ -31,8 +31,10 @@ else:
     TEST_DB='plankton/plankton_val_lmdb'
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
-MODEL_FILE='plankton/inet_deploy9.prototxt'
-PRETRAINED='plankton/inet9.caffemodel'
+MODEL_FILE='plankton/inet_deploy10.prototxt'
+#PRETRAINED='plankton/ine9Full36000.caffemodel'
+PRETRAINED='plankton/inet10-Iter35000.caffemodel'
+
 
 
 
@@ -105,7 +107,7 @@ def getimages(datum,angle=0,rescale=1.0):
             #l=(img1.shape[0]-tsize)/2
             #img1=img1[l:l+tsize,l:l+tsize]
             img1=np.clip(img1,-1000,255)
-            img1=np.floor(img1)
+            img1=img1.astype(np.int)
 
             #print np.min(img),np.max(img),np.min(img1),np.max(img1)
             arr=img1[:,:,None]
