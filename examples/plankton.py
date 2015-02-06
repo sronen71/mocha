@@ -12,8 +12,8 @@ import cv2
 
 caffe_root = '../'
 sys.path.insert(0,caffe_root+'python')
-#SUBMIT=True
-SUBMIT=False
+SUBMIT=True
+#SUBMIT=False
 
 oversample=True
 supersample=True
@@ -32,8 +32,8 @@ else:
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
 MODEL_FILE='plankton/inet_deploy10.prototxt'
-#PRETRAINED='plankton/ine9Full36000.caffemodel'
-PRETRAINED='plankton/inet10-Iter35000.caffemodel'
+PRETRAINED='plankton/inet10Full-44000.caffemodel'
+#PRETRAINED='plankton/inet10-Iter35000.caffemodel'
 
 
 

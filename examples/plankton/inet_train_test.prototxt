@@ -5,14 +5,16 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/plankton/plankton_full_lmdb"
+#   source: "examples/plankton/plankton_full_lmdb"
+    source: "examples/plankton/plankton_train_lmdb"
+ 
     backend: LMDB
     batch_size: 256
   }
   transform_param {
     rotate: true
-    resize: 64
-    crop_size: 56
+    resize: 70
+    crop_size: 60
     mirror: true
     randsize: true
     distort: true
@@ -35,8 +37,8 @@ layers {
   }
   transform_param {
     rotate: false
-    resize: 64
-    crop_size: 56
+    resize: 70
+    crop_size: 60
     mirror: false
   }
 
@@ -98,7 +100,7 @@ layers {
   weight_decay: 1
   weight_decay: 0
   convolution_param {
-    num_output: 64
+    num_output: 80
     kernel_size: 3
     stride: 1
     pad: 1
@@ -409,7 +411,7 @@ layers {
   weight_decay: 1
   weight_decay: 0
   inner_product_param {
-    num_output: 512
+    num_output: 684
     weight_filler {
       type: "gaussian"
       std: 0.02
