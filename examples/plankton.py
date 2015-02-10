@@ -12,8 +12,8 @@ import cv2
 
 caffe_root = '../'
 sys.path.insert(0,caffe_root+'python')
-SUBMIT=True
-#SUBMIT=False
+#SUBMIT=True
+SUBMIT=False
 
 oversample=True
 supersample=True
@@ -31,9 +31,10 @@ else:
     TEST_DB='plankton/plankton_val_lmdb'
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
-MODEL_FILE='plankton/inet_deploy10.prototxt'
-PRETRAINED='plankton/inet10Full-44000.caffemodel'
-#PRETRAINED='plankton/inet10-Iter35000.caffemodel'
+MODEL_FILE='plankton/inet_deploy11.prototxt'
+PRETRAINED='plankton/inet_model_val_11.caffemodel'
+#pretrained='plankton/inet10-iter35000.caffemodel'
+#PRETRAINED='plankton/inet11-full-iter56000.caffemodel'
 
 
 
@@ -77,7 +78,7 @@ def chunks(l, n):
 
 
 
-def getimages(datum,angle=0,rescale=1.0):
+def getimages(datum,angle=0,rescale=1.0,lumin=1.0):
     with env.begin() as txn:
         cursor = txn.cursor()           # Cursor on main database.
         cursor.first()
@@ -106,6 +107,8 @@ def getimages(datum,angle=0,rescale=1.0):
             #img1=cv2.resize(img,(0,0),fx=f,fy=f,interpolation=inter)
             #l=(img1.shape[0]-tsize)/2
             #img1=img1[l:l+tsize,l:l+tsize]
+
+            img1=lumin*img1;
             img1=np.clip(img1,-1000,255)
             img1=img1.astype(np.int)
 
@@ -126,24 +129,28 @@ def getimages(datum,angle=0,rescale=1.0):
 
 if supersample:
     angles=range(0,360,45)
-    rescales=[0.95,1.0,1.05]
+    rescales=[0.9,1.0,1.1]
+    lumins=[1.0] # didn't help much to diversify this
 #  rescales=[1.0]
 else:
     angles=[0]
     rescales=[1.0]
+    lumins=[1.0]
 
 pre=[]
 for angle in angles:
     for rescale in rescales:
-        pre.append((angle,rescale))
+        for lumin in lumins:
+            pre.append((angle,rescale,lumin))
 
 predictions=np.zeros(1)
-for config in pre:
+for k,config in enumerate(pre):
     angle=config[0]
     rescale=config[1]
-    print "angle,rescale:", angle,rescale
-    images,labels,keys=getimages(datum,angle,rescale)
-    if angle is 0:
+    lumin=config[2]
+    print "angle,rescale,lumin :", angle,rescale,lumin
+    images,labels,keys=getimages(datum,angle,rescale,lumin)
+    if k==0:
         predcitions=np.zeros(len(images))
     predictions1=[]
     count=0

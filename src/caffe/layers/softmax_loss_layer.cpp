@@ -17,6 +17,9 @@ void SoftmaxWithLossLayer<Dtype>::LayerSetUp(
   softmax_top_vec_.clear();
   softmax_top_vec_.push_back(&prob_);
   softmax_layer_->SetUp(softmax_bottom_vec_, &softmax_top_vec_);
+  start_iter_ = this -> layer_param_.softmax_param().iter_start();
+  end_iter_ = this -> layer_param_.softmax_param().iter_full();
+  pseudo_ =  this -> layer_param_.softmax_param().pseudo();
 }
 
 template <typename Dtype>
@@ -41,10 +44,38 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   int dim = prob_.count() / num;
   int spatial_dim = prob_.height() * prob_.width();
   Dtype loss = 0;
+  Dtype dynamic_loss_weight=1.0;
+  uint32_t iter = Caffe::iter();
+    if (pseudo_) {
+       if ( iter <= start_iter_) {
+        dynamic_loss_weight=0;
+       } 
+        else {
+           if (iter < end_iter_) {
+               dynamic_loss_weight= (double(iter)-start_iter_)/(end_iter_-start_iter_);
+            }
+        }
+    }
+     
   for (int i = 0; i < num; ++i) {
+
     for (int j = 0; j < spatial_dim; j++) {
-      loss -= log(std::max(prob_data[i * dim +
-          static_cast<int>(label[i * spatial_dim + j]) * spatial_dim + j],
+      float w=1.0;
+      int choice = static_cast<int>(label[i * spatial_dim + j]);
+      if ( pseudo_ && (choice==pseudo_label_)) {
+          int choice=0;
+          float vmax=0;
+          for (int k=0; k< dim; k++) {
+           float val=prob_data[i*dim+k*spatial_dim+j] ;  
+            if (val>vmax) {
+                choice=k;
+                vmax=val;
+            }
+          }
+        w=dynamic_loss_weight;
+      }
+      loss -= w*log(std::max(prob_data[i * dim +
+           choice * spatial_dim + j],
                            Dtype(FLT_MIN)));
     }
   }
@@ -80,6 +111,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     }
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
+          
     caffe_scal(prob_.count(), loss_weight / num / spatial_dim, bottom_diff);
   }
 }

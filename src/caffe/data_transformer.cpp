@@ -14,38 +14,9 @@ namespace caffe {
 
 
 template<typename Dtype>
-
-// Load distortion fields
-
-// $TODO(SR): Since there are two live DataTransformer instances (for train and test),
-// the mField consumes double memory. The distortion fields may be rather loaded once at higher level.
-
-void DataTransformer<Dtype>::LoadFields() {
-    std::string path="/home/shai/plankton/fields/";
-
-    std::array<double,256*256>  buffer{};
-    for (int k=0;k<4000;++k) {
-        
-        std::string file_name=path+"field"+std::to_string(k)+".fld";
-        std::ifstream myfile(file_name,std::ifstream::binary | std::ios::in);
-        if (!myfile) {
-            std::cerr << "Cannot open the file" << std::endl;
-            exit(1);
-        }
-        myfile.read(reinterpret_cast<char *>(&buffer[0]),256*256*sizeof(double));
-        mField.push_back(buffer);
-    }
-}
-
-template<typename Dtype>
 DataTransformer<Dtype>::DataTransformer (const TransformationParameter& param) 
     : param_(param) {
     phase_ = Caffe::phase();
-/*
-    if (param_.distort()) {
-        LoadFields();
-    }
-*/
 }
 
 template<typename Dtype>
@@ -155,8 +126,8 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
           if (distort && (Rand() % 5)) {
 
             cv::Mat dst1(height,width,cv::DataType<Dtype>::type);  
-            cv::Mat mapx(256,256,CV_32FC1);
-            cv::Mat mapy(256,256,CV_32FC1);
+            cv::Mat mapx(height,width,CV_32FC1);
+            cv::Mat mapy(height,width,CV_32FC1);
 	    double norm=64*64/10;
 	    double axx= (Rand()% 200-100.0)/100.0/norm;
 	    double axy= (Rand()% 200-100.0)/100.0/norm;
@@ -166,8 +137,8 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
 	    double bxy= (Rand()% 200-100.0)/100.0/norm;
 	    double byy= (Rand()% 200-100.0)/100.0/norm;
 	    	
-            for (int i=0;i<256;i++) { //rows
-                for (int j=0;j<256;j++) { //cols
+            for (int i=0;i<height;i++) { //rows
+                for (int j=0;j<width;j++) { //cols
 		    double jc=j-128;
 	            double ic=i-128;	    
                     mapx.at<float>(i,j)=j+(axx*jc*jc+2*axy*jc*ic+ayy*ic*ic);

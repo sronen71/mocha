@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 
 def augment(image):
-    tsize=256
+    tsize=400
     img=cv2.imread(image,-1)
 
     img=cv2.bitwise_not(img)

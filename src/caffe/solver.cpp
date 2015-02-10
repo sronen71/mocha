@@ -183,6 +183,10 @@ void Solver<Dtype>::Solve(const char* resume_file) {
   vector<Blob<Dtype>*> bottom_vec;
   for (; iter_ < param_.max_iter(); ++iter_) {
     // Save a snapshot if needed.
+    
+    /// SR hack to put iter into caffe
+    Caffe::set_iter(iter_);
+
     if (param_.snapshot() && iter_ > start_iter &&
         iter_ % param_.snapshot() == 0) {
       Snapshot();
@@ -316,6 +320,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
         << mean_score << loss_msg_stream.str();
   }
   Caffe::set_phase(Caffe::TRAIN);
+
 }
 
 

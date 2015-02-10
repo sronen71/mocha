@@ -112,6 +112,8 @@ class Caffe {
   inline static Brew mode() { return Get().mode_; }
   // Returns the phase: TRAIN or TEST.
   inline static Phase phase() { return Get().phase_; }
+
+  inline static int iter() { return Get().iter_;}
   // The setters for the variables
   // Sets the mode. It is recommended that you don't change the mode halfway
   // into the program since that may cause allocation of pinned memory being
@@ -120,6 +122,9 @@ class Caffe {
   inline static void set_mode(Brew mode) { Get().mode_ = mode; }
   // Sets the phase.
   inline static void set_phase(Phase phase) { Get().phase_ = phase; }
+  
+  inline static void set_iter(int iter) {Get().iter_ = iter; }  
+
   // Sets the random seed of both boost and curand
   static void set_random_seed(const unsigned int seed);
   // Sets the device. Since we have cublas and curand stuff, set device also
@@ -137,6 +142,8 @@ class Caffe {
 
   Brew mode_;
   Phase phase_;
+
+  int iter_;
   static shared_ptr<Caffe> singleton_;
 
  private:

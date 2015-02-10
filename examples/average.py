@@ -1,6 +1,6 @@
 import csv
 
-FILES=["submit-inet9.csv","submit-inet10.csv"]
+FILES=["submit-inet10.csv","submit-inet11.csv"]
 SUBMIT="ensemble.csv"
 PATH="plankton/"
 average={}
