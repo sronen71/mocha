@@ -764,7 +764,7 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
   uint32_t start_iter_;
   uint32_t end_iter_;
   uint32_t pseudo_label_;
-  bool pseudo_;
+  float semi_weight_;
 };
 
 }  // namespace caffe

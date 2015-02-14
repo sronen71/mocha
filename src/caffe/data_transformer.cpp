@@ -43,6 +43,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   const int resize = param_.resize();
   const bool randsize = param_.randsize();	
   const bool distort = param_.distort();
+  const double zoom = (double)param_.zoom(); 
 
   if (mirror && crop_size == 0) {
     LOG(FATAL) << "Current implementation requires mirror and crop_size to be "
@@ -61,7 +62,7 @@ void DataTransformer<Dtype>::Transform(const int batch_item_id,
   if (actual_size> std::max(height,width)) {
 	  actual_size=std::max(height,width);
   }
-  double resize_scale=double(resize)/double(actual_size);
+  double resize_scale=zoom*double(resize)/double(actual_size);
  
   double angle1=0;
   double angle2=0;

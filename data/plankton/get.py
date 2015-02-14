@@ -63,7 +63,7 @@ def main():
         name,scaling,actual_size=augment(test_image)
 
         ti=name.split('/')[-1]
-        tlist.append(ti+" 0 "+str(actual_size))
+        tlist.append(ti+" 121 "+str(actual_size))
         X_test.append(scaling)
                 
     categories=listdir(op.join(ROOT_DIR))

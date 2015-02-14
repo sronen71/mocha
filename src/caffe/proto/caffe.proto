@@ -356,6 +356,7 @@ message TransformationParameter {
 
   optional bool randsize = 13 [default = false];
   optional bool distort = 14 [default=false];
+  optional float zoom = 15 [default = 1.0];
 }
 
 // Message that stores parameters used by AccuracyLayer
@@ -665,7 +666,7 @@ message SoftmaxParameter {
 
   optional uint32 iter_start = 2 [default = 0];
   optional uint32 iter_full = 3 [default =0];
-  optional bool pseudo = 4;
+  optional float semi_weight = 4 [default =0];
   optional uint32 pseudo_label =5 [default =0 ];
 }
 

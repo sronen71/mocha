@@ -19,7 +19,8 @@ void SoftmaxWithLossLayer<Dtype>::LayerSetUp(
   softmax_layer_->SetUp(softmax_bottom_vec_, &softmax_top_vec_);
   start_iter_ = this -> layer_param_.softmax_param().iter_start();
   end_iter_ = this -> layer_param_.softmax_param().iter_full();
-  pseudo_ =  this -> layer_param_.softmax_param().pseudo();
+  semi_weight_ =  this -> layer_param_.softmax_param().semi_weight();
+  pseudo_label_ = this -> layer_param_.softmax_param().pseudo_label();
 }
 
 template <typename Dtype>
@@ -33,6 +34,10 @@ void SoftmaxWithLossLayer<Dtype>::Reshape(
   }
 }
 
+
+
+
+
 template <typename Dtype>
 void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
     const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
@@ -43,10 +48,10 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
   int num = prob_.num();
   int dim = prob_.count() / num;
   int spatial_dim = prob_.height() * prob_.width();
-  Dtype loss = 0;
-  Dtype dynamic_loss_weight=1.0;
+  Dtype loss = 0, loss1=0,loss2=0;
+  Dtype dynamic_loss_weight=semi_weight_;
   uint32_t iter = Caffe::iter();
-    if (pseudo_) {
+    if (semi_weight_>0) {
        if ( iter <= start_iter_) {
         dynamic_loss_weight=0;
        } 
@@ -56,15 +61,14 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
             }
         }
     }
-     
+  int num_train=0;
+  int num_semi=0;  
   for (int i = 0; i < num; ++i) {
 
     for (int j = 0; j < spatial_dim; j++) {
-      float w=1.0;
       int choice = static_cast<int>(label[i * spatial_dim + j]);
-      if ( pseudo_ && (choice==pseudo_label_)) {
-          int choice=0;
-          float vmax=0;
+      if ( semi_weight_>0 && (choice==pseudo_label_)) {
+          float vmax=-1;
           for (int k=0; k< dim; k++) {
            float val=prob_data[i*dim+k*spatial_dim+j] ;  
             if (val>vmax) {
@@ -72,14 +76,26 @@ void SoftmaxWithLossLayer<Dtype>::Forward_cpu(
                 vmax=val;
             }
           }
-        w=dynamic_loss_weight;
-      }
-      loss -= w*log(std::max(prob_data[i * dim +
+        num_semi++;
+        loss2 -= dynamic_loss_weight*log(std::max(prob_data[i * dim +
            choice * spatial_dim + j],
                            Dtype(FLT_MIN)));
+ 
+      } else {
+          num_train++;
+          loss1 -= log(std::max(prob_data[i * dim +choice * spatial_dim + j],Dtype(FLT_MIN)));
+ 
+      }
     }
   }
-  (*top)[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
+  loss=loss1/num_train;
+  if (num_semi>0) {
+      loss+=loss2/num_semi;
+  }
+ //    std::cout << num_train << " " << num_semi << " " << 
+  //       dynamic_loss_weight<< " "<< loss1<< " "<<loss2<< " "<<loss<<std::endl;
+  //  std::cout<<"Loss Iter: "<<iter<<std::endl;
+  (*top)[0]->mutable_cpu_data()[0] = loss;
   if (top->size() == 2) {
     (*top)[1]->ShareData(prob_);
   }
@@ -96,6 +112,22 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   }
     */
   if (propagate_down[0]) {
+
+  Dtype dynamic_loss_weight=semi_weight_;
+  uint32_t iter = Caffe::iter();
+    if (semi_weight_>0) {
+       if ( iter <= start_iter_) {
+        dynamic_loss_weight=0;
+       } 
+        else {
+           if (iter < end_iter_) {
+               dynamic_loss_weight= (double(iter)-start_iter_)/(end_iter_-start_iter_);
+            }
+        }
+    }
+ 
+
+    const Dtype loss_weight = top[0]->cpu_diff()[0];
     Dtype* bottom_diff = (*bottom)[0]->mutable_cpu_diff();
     const Dtype* prob_data = prob_.cpu_data();
     caffe_copy(prob_.count(), prob_data, bottom_diff);
@@ -103,16 +135,44 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     int num = prob_.num();
     int dim = prob_.count() / num;
     int spatial_dim = prob_.height() * prob_.width();
+    int num_train=0,num_semi=0;
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
-        bottom_diff[i * dim + static_cast<int>(label[i * spatial_dim + j])
-            * spatial_dim + j] -= 1;
+        int choice = static_cast<int>(label[i * spatial_dim + j]);   
+        if ( semi_weight_>0 && (choice==pseudo_label_)) {
+            num_semi++;
+        }
+      }
+    }
+    num_train=num-num_semi;
+  
+    for (int i = 0; i < num; ++i) {
+      for (int j = 0; j < spatial_dim; ++j) {
+          int choice = static_cast<int>(label[i * spatial_dim + j]);
+          if ( semi_weight_>0 && (choice==pseudo_label_)) {
+              float vmax=-1;
+               for (int k=0; k< dim; k++) {
+                 float val=prob_data[i*dim+k*spatial_dim+j] ;  
+                   if (val>vmax) {
+                    choice=k;
+                    vmax=val;
+                    }
+               }
+                bottom_diff[i * dim + choice* spatial_dim + j] -= 1;
+                caffe_scal(dim,loss_weight*dynamic_loss_weight/num_semi/spatial_dim,bottom_diff+i*dim);
+          }  
+          else        
+          {
+              bottom_diff[i * dim + choice* spatial_dim + j] -= 1;
+             // caffe_scal(dim,loss_weight/num_train/spatial_dim,bottom_diff+i*dim);
+//              std::cout<<i << " "<<choice << " "<<num_train<<std::endl;
+          }
+
       }
     }
     // Scale gradient
-    const Dtype loss_weight = top[0]->cpu_diff()[0];
-          
     caffe_scal(prob_.count(), loss_weight / num / spatial_dim, bottom_diff);
+    
   }
 }
 
