@@ -4,7 +4,7 @@
 
 # Set SEMI=TRUE to creat semi-supervised data set
 
-set SEMI=TRUE
+#set SEMI=FALSE
 
 EXAMPLE=examples/plankton
 DATA=/home/shai/mocha/data/plankton
@@ -36,18 +36,17 @@ fi
 
 
 
-if $SEMI; then
-    echo "Creating semi-supervised lmdb..."
-
-    GLOG_logtostderr=1 $TOOLS/convert_imageset \
-        --resize_height=$RESIZE_HEIGHT \
-        --resize_width=$RESIZE_WIDTH \
-        --shuffle \
-        --gray \
-        $SEMI_DATA_ROOT \
-        $DATA/semi.txt \
-        $EXAMPLE/plankton_semi_lmdb
-fi
+#if $SEMI; then
+#    echo "Creating semi-supervised lmdb..."
+#
+#    GLOG_logtostderr=1 $TOOLS/convert_imageset \
+#        --resize_height=$RESIZE_HEIGHT \
+#        --resize_width=$RESIZE_WIDTH \
+#        --gray \
+#        $SEMI_DATA_ROOT \
+#        $DATA/semi.txt \
+#        $EXAMPLE/plankton_semi_lmdb
+#fi
 
 
 
@@ -58,8 +57,8 @@ echo "creating full train lmdb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
-    --shuffle \
     --gray \
+    --shuffle \
     $TRAIN_DATA_ROOT \
     $DATA/fulltrain.txt \
     $EXAMPLE/plankton_full_lmdb
@@ -72,8 +71,8 @@ echo "Creating train lmdb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
-    --shuffle \
     --gray \
+    --shuffle \
     $TRAIN_DATA_ROOT \
     $DATA/train.txt \
     $EXAMPLE/plankton_train_lmdb
@@ -83,8 +82,8 @@ echo "Creating val lmdb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
-    --shuffle \
     --gray \
+    --shuffle \
     $VAL_DATA_ROOT \
     $DATA/val.txt \
     $EXAMPLE/plankton_val_lmdb
@@ -94,8 +93,8 @@ echo "Creating test lmdb..."
 GLOG_logtostderr=1 $TOOLS/convert_imageset \
     --resize_height=$RESIZE_HEIGHT \
     --resize_width=$RESIZE_WIDTH \
-    --shuffle \
     --gray \
+    --shuffle \
     $TEST_DATA_ROOT \
     $DATA/test.txt \
     $EXAMPLE/plankton_test_lmdb

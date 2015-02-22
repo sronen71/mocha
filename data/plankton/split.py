@@ -62,6 +62,22 @@ fr.close()
 ftrain.close()
 ffulltrain.close()
 fval.close()
+
+
+Xtrain=[float(x) for x in Xtrain]
+Xval=[float(x) for x in Xval]
+
+Xtrain=np.array(Xtrain)
+Xval=np.array(Xval)
+Xtrain=np.reshape(Xtrain,(Xtrain.shape[0],1))
+Xval=np.reshape(Xval,(Xval.shape[0],1))
+
+Ytrain=np.array(Ytrain).astype(np.float32)
+Yval=np.array(Yval).astype(np.float32)
+Ytrain=np.reshape(Ytrain,(Ytrain.shape[0],1))
+Yval=np.reshape(Yval,(Yval.shape[0],1))
+
+
 with h5py.File(train_h5, 'w') as f:
     f['data'] = Xtrain
     f['label'] = Ytrain

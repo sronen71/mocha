@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 
 def augment(image):
-    tsize=400
+    tsize=256
     img=cv2.imread(image,-1)
 
     img=cv2.bitwise_not(img)
@@ -20,6 +20,7 @@ def augment(image):
 
     rows1,cols1=img1.shape   
     actual_size=max(cols1,rows1)
+    ar=float(min(cols1,rows))/actual_size
     f=float(tsize)/max(cols1,rows1)
     #inter=cv2.cv.CV_INTER_AREA
     inter=cv2.cv.CV_INTER_LINEAR
@@ -39,7 +40,7 @@ def augment(image):
     name=split1[0]+".png"
 
     cv2.imwrite(name,img1)
-    return name,f,actual_size
+    return name,f,actual_size,ar
 
 def main():
     ROOT_DIR="/home/shai/plankton/train"
@@ -60,11 +61,11 @@ def main():
     test_images=glob(op.join(TEST_DIR,"*.jpg"))
     for test_image  in test_images:
         print test_image
-        name,scaling,actual_size=augment(test_image)
+        name,scaling,actual_size,ar=augment(test_image)
 
         ti=name.split('/')[-1]
         tlist.append(ti+" 121 "+str(actual_size))
-        X_test.append(scaling)
+        X_test.append(actual_size)
                 
     categories=listdir(op.join(ROOT_DIR))
     categories.sort()
@@ -76,10 +77,10 @@ def main():
         
         for image in images:
             print image
-            aug,scaling,actual_size=augment(image)
+            aug,scaling,actual_size,ar=augment(image)
             aug='/'.join(aug.split('/')[-2:])
             plist.append(" ".join([aug,str(encode),str(actual_size)]))
-            X_train.append(scaling)
+            X_train.append(actual_size)
             Y_train.append(encode)
 
 

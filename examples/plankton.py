@@ -12,8 +12,8 @@ import cv2
 
 caffe_root = '../'
 sys.path.insert(0,caffe_root+'python')
-#SUBMIT=True
-SUBMIT=False
+SUBMIT=True
+#SUBMIT=False
 
 oversample=True
 supersample=True
@@ -31,10 +31,8 @@ else:
     TEST_DB='plankton/plankton_val_lmdb'
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
-MODEL_FILE='plankton/inet_deploy11.prototxt'
-PRETRAINED='plankton/inet_model_val_11.caffemodel'
-#pretrained='plankton/inet10-iter35000.caffemodel'
-#PRETRAINED='plankton/inet11-full-iter56000.caffemodel'
+MODEL_FILE='plankton/inet_deploy9.prototxt'
+PRETRAINED='plankton/ine9Full36000.caffemodel'
 
 
 
@@ -143,15 +141,13 @@ for angle in angles:
         for lumin in lumins:
             pre.append((angle,rescale,lumin))
 
-predictions=np.zeros(1)
+predictions=np.zeros(len(images))
 for k,config in enumerate(pre):
     angle=config[0]
     rescale=config[1]
     lumin=config[2]
     print "angle,rescale,lumin :", angle,rescale,lumin
     images,labels,keys=getimages(datum,angle,rescale,lumin)
-    if k==0:
-        predcitions=np.zeros(len(images))
     predictions1=[]
     count=0
     for chunk in chunks(images,len(images)/10): 
@@ -159,6 +155,9 @@ for k,config in enumerate(pre):
         print count
         predictions_chunk = net.predict(chunk,oversample=oversample)  
         predictions1.extend(predictions_chunk)
+    if len(predictions1)!=len(images):
+        print "wrong length"
+        exit(2)
     predictions=predictions+predictions1
     
 predictions=predictions/len(pre)

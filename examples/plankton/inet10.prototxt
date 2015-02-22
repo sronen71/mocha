@@ -5,8 +5,8 @@ layers {
   top: "data"
   top: "label"
   data_param {
-#    source: "examples/plankton/plankton_train_lmdb"
-    source: "examples/plankton/plankton_full_lmdb"
+     source: "examples/plankton/plankton_train_lmdb"
+#    source: "examples/plankton/plankton_full_lmdb"
     backend: LMDB
     batch_size: 256
   }
@@ -30,7 +30,6 @@ layers {
   top: "label"
   data_param {
     source: "examples/plankton/plankton_val_lmdb"
- #   source: "examples/plankton/plankton_train_lmdb"
     backend: LMDB
     batch_size: 10
   }
