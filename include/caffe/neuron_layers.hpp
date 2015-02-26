@@ -287,8 +287,99 @@ class PowerLayer : public NeuronLayer<Dtype> {
   Dtype diff_scale_;
 };
 
-/**
- * @brief Rectified Linear Unit non-linearity @f$ y = \max(0, x) @f$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**rameterized Rectified Linear Unit non-linearity @f$
+ *        y_i = \max(0, x_i) + a_i \min(0, x_i)
+ *        @f$. The differences from ReLULayer are 1) negative slopes are
+ *        learnable though backprop and 2) negative slopes can vary across
+ *        channels.
+ */
+template <typename Dtype>
+class PReLULayer : public NeuronLayer<Dtype> {
+ public:
+  /**
+   * @param param provides PReLUParameter prelu_param,
+   *     with PReLULayer options:
+   *   - init_value (\b optional, default 0.25).
+   *     all negative slopes over channels are set to this value.
+   *   - channel_shared (\b optional, default false).
+   *     negative slopes are shared across channels.
+   */
+  explicit PReLULayer(const LayerParameter& param)
+          : NeuronLayer<Dtype>(param) {}
+
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  virtual inline LayerParameter_LayerType type() const { 
+      return LayerParameter_LayerType_PRELU;
+  }
+
+ protected:
+  /**
+   * @param bottom input Blob vector (length 1)
+   *   -# @f$ (N \times C \times H \times W) @f$
+   *      the inputs @f$ x @f$
+   * @param top output Blob vector (length 1)
+   *   -# @f$ (N \times C \times H \times W) @f$
+   *      the computed outputs for each channel @f$i@f$ @f$
+   *        y_i = \max(0, x_i) + a_i \min(0, x_i)
+   *      @f$.
+   */
+ virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  /**
+   * @brief Computes the error gradient w.r.t. the PReLU inputs.
+   *
+   * @param top output Blob vector (length 1), providing the error gradient with
+   *      respect to the outputs
+   *   -# @f$ (N \times C \times H \times W) @f$
+   *      containing error gradients @f$ \frac{\partial E}{\partial y} @f$
+   *      with respect to computed outputs @f$ y @f$
+   * @param propagate_down see Layer::Backward.
+   * @param bottom input Blob vector (length 1)
+   *   -# @f$ (N \times C \times H \times W) @f$
+   *      the inputs @f$ x @f$; For each channel @f$i@f$, backward fills their
+*/
+
+  virtual void Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
+
+  bool channel_shared_;
+  Blob<Dtype> multiplier_;  // dot multipler for backward computation of params
+  Blob<Dtype> bottom_memory_;  // memory for in-place computation
+};
+
+
+
+
+
+
+/* @brief Rectified Linear Unit non-linearity @f$ y = \max(0, x) @f$.
  *        The simple max is fast to compute, and the function does not saturate.
  */
 template <typename Dtype>

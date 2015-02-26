@@ -269,6 +269,7 @@ message LayerParameter {
     TANH = 23;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
+    PRELU = 131;
   }
   optional LayerType type = 5; // the layer type from the enum above
 
@@ -324,6 +325,7 @@ message LayerParameter {
   optional TanHParameter tanh_param = 37;
   optional ThresholdParameter threshold_param = 25;
   optional WindowDataParameter window_data_param = 20;
+  optional PReLUParameter prelu_param = 131;
 
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
@@ -618,6 +620,19 @@ message PowerParameter {
   optional float scale = 2 [default = 1.0];
   optional float shift = 3 [default = 0.0];
 }
+
+
+// Message that stores parameters used by PReLULayer
+message PReLUParameter {
+  // Parametric ReLU described in K. He et al, Delving Deep into Rectifiers:
+  // Surpassing Human-Level Performance on ImageNet Classification, 2015.
+
+  // Initial value of a_i. Set as a_i=init_value for all channel i.
+  optional float init_value = 1 [default = 0.25];
+  // Whether or not slope paramters are shared across channels.
+  optional bool channel_shared = 2 [default = false];
+}
+
 
 // Message that stores parameters used by ReLULayer
 message ReLUParameter {
