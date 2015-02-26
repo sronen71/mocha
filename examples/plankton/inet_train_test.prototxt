@@ -5,7 +5,11 @@ layers {
   top: "data"
   top: "label"
   data_param {
-     source: "examples/plankton/plankton_train_lmdb-1"
+
+   #  source: "examples/plankton/plankton_train_lmdb-1"
+   # full training:
+     source: "examples/plankton/plankton_full_lmdb-1"
+ 
     backend: LMDB
     batch_size: 128
   }

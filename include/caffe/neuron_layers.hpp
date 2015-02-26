@@ -303,9 +303,13 @@ class ReLULayer : public NeuronLayer<Dtype> {
   explicit ReLULayer(const LayerParameter& param)
       : NeuronLayer<Dtype>(param) {}
 
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+              vector<Blob<Dtype>*>* top); 
+
   virtual inline LayerParameter_LayerType type() const {
     return LayerParameter_LayerType_RELU;
   }
+  vector<Dtype> relu_channel_slope_;
 
  protected:
   /**

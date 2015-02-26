@@ -25,14 +25,14 @@ tsize=64 # 64
 
 
 if SUBMIT:
-    TEST_DB="plankton/plankton_test_lmdb"
+    TEST_DB="plankton/plankton_test_lmdb-1"
     SUBMIT_FILE="plankton/submit.csv"
 else:
-    TEST_DB='plankton/plankton_val_lmdb'
+    TEST_DB='plankton/plankton_val_lmdb-1'
 
 ENCODE_FILE="/home/shai/mocha/data/plankton/encode.txt"
-MODEL_FILE='plankton/inet_deploy9.prototxt'
-PRETRAINED='plankton/ine9Full36000.caffemodel'
+MODEL_FILE='plankton/inet_deploy_deeper.prototxt'
+PRETRAINED='plankton/inet_deeper_full.caffemodel'
 
 
 
@@ -141,8 +141,8 @@ for angle in angles:
         for lumin in lumins:
             pre.append((angle,rescale,lumin))
 
-predictions=np.zeros(len(images))
 for k,config in enumerate(pre):
+
     angle=config[0]
     rescale=config[1]
     lumin=config[2]
@@ -158,7 +158,10 @@ for k,config in enumerate(pre):
     if len(predictions1)!=len(images):
         print "wrong length"
         exit(2)
-    predictions=predictions+predictions1
+    if k==0:
+        predictions = np.array(predictions1)
+    else:
+        predictions += predictions1
     
 predictions=predictions/len(pre)
 
