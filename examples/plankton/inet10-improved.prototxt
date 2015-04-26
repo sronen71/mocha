@@ -5,7 +5,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/plankton/plankton_train_lmdb"
+     source: "examples/plankton/plankton_train_lmdb-1"
     backend: LMDB
     batch_size: 256
   }
@@ -28,8 +28,7 @@ layers {
   top: "data"
   top: "label"
   data_param {
-    source: "examples/plankton/plankton_val_lmdb"
- #   source: "examples/plankton/plankton_train_lmdb"
+    source: "examples/plankton/plankton_val_lmdb-1"
     backend: LMDB
     batch_size: 10
   }
@@ -59,11 +58,11 @@ layers {
     pad: 2
     weight_filler {
      type: "gaussian"
-     std: 0.01
+     std: 0.035
     }
     bias_filler {
       type: "constant"
-      value : 0.1
+      value : 0.0
     }
   }
 } 
@@ -104,11 +103,11 @@ layers {
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.02
+     std: 0.059
     }
     bias_filler {
       type: "constant"
-      value : 0.1
+      value : 0.0
     }
   }
 } 
@@ -120,10 +119,45 @@ layers {
   top: "conv1b"
 }
 
+
+layers {
+  name: "conv1c"
+  type: CONVOLUTION
+  bottom: "conv1b"
+  top: "conv1c"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  convolution_param {
+    num_output: 96
+    kernel_size: 3
+    stride: 1
+    pad: 1
+    weight_filler {
+     type: "gaussian"
+     std: 0.048
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }
+  }
+} 
+
+layers {
+  name: "relu1c"
+  type: RELU
+  bottom: "conv1c"
+  top: "conv1c"
+}
+
+
+
 layers {
  name: "pool1"
  type: POOLING
- bottom: "conv1b"
+ bottom: "conv1c"
  top: "pool1"
  pooling_param {
   pool: MAX
@@ -148,11 +182,11 @@ layers {
     pad: 2
     weight_filler {
      type: "gaussian"
-     std: 0.02
+     std: 0.025
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 } 
@@ -181,11 +215,11 @@ layers {
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.02
+     std: 0.042
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 } 
@@ -212,6 +246,8 @@ layers {
 }
 
 
+
+
 layers {
   name: "conv3"
   type: CONVOLUTION
@@ -228,11 +264,11 @@ layers {
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.02
+     std: 0.029
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 } 
@@ -257,6 +293,16 @@ layers {
   }
 }
 
+#layers {
+#  name: "drop_conv3"
+#  type: DROPOUT
+#  bottom: "pool3"
+#  top: "pool3d"
+#  dropout_param {
+#    dropout_ratio: 0.5
+#  }
+#}
+
 
 layers {
   name: "conv4"
@@ -274,11 +320,11 @@ layers {
     pad: 1
     weight_filler {
      type: "gaussian"
-     std: 0.02
+     std: 0.021
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 } 
@@ -327,11 +373,11 @@ layers {
     num_output: 1024
     weight_filler {
       type: "gaussian"
-      std: 0.02
+      std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 }
@@ -365,11 +411,11 @@ layers {
     num_output: 512
     weight_filler {
       type: "gaussian"
-      std: 0.02
+      std: 0.01
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 }
@@ -404,11 +450,11 @@ layers {
     num_output: 121
     weight_filler {
       type: "gaussian"
-      std: 0.02
+      std: 0.001
     }
     bias_filler {
       type: "constant"
-      value: 0.1
+      value: 0.0
     }
   }
 }
@@ -419,4 +465,76 @@ layers {
   bottom: "fc3"
   bottom: "label"
   top: "loss"
+  loss_weight: 1.0
+}
+
+###############################################################
+layers {
+  name: "fc1_side1"
+  type: INNER_PRODUCT
+  bottom: "pool2"
+  top: "fc1_side1"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 1024
+    weight_filler {
+      type: "gaussian"
+      std: 0.01
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }
+  }
+}
+
+layers {
+  name: "fc1_side1_relu"
+  type: RELU
+  bottom: "fc1_side1"
+  top: "fc1_side1"
+}
+layers {
+  name: "fc_side_1_drop"
+  type: DROPOUT
+  bottom: "fc1_side1"
+  top: "fc1_side1"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+
+
+layers {
+  name: "fc2_side1"
+  type: INNER_PRODUCT
+  bottom: "fc1_side1"
+  top: "fc2_side1"
+  blobs_lr: 1
+  blobs_lr: 2
+  weight_decay: 1
+  weight_decay: 0
+  inner_product_param {
+    num_output: 121
+    weight_filler {
+      type: "gaussian"
+      std: 0.001
+    }
+    bias_filler {
+      type: "constant"
+      value: 0.0
+    }
+  }
+}
+
+layers {
+  name: "loss_side1"
+  type: SOFTMAX_LOSS
+  bottom: "fc2_side1"
+  bottom: "label"
+  top: "loss_side1"
+  loss_weight: 0.5
 }

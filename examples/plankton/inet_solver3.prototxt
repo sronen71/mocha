@@ -5,25 +5,23 @@ test_iter: 607 # 6070 with batch of 10
 # Carry out testing every <test_interval>  training iterations.
 test_interval: 500
 # The base learning rate, momentum and the weight decay of the network.
-base_lr: 0.005
+base_lr: 1e-5  #0.01
 momentum: 0.9
 weight_decay: 0.001
 # The learning rate policy
 #lr_policy: "poly"
 #power: 1.0
 
-lr_policy: "multistep"
+lr_policy: "step"
 gamma: 0.1
-stepvalue: 23000 
-stepvalue: 34000
-stepvalue: 44000
-stepvalue: 49000
+stepsize: 1200 #19000 
 # Display every # iterations
 display: 500 # every 8xepoch
 # The maximum number of iterations
-max_iter: 51000 # 44000
+max_iter: 1200 # 44000
 # snapshot intermediate results
-snapshot: 2000
+snapshot: 5000
 snapshot_prefix: "examples/plankton/inet"
 # solver mode: CPU or GPU
 solver_mode: GPU
+random_seed: 1
