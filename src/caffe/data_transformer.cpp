@@ -10,6 +10,18 @@
 #include <fstream>
 #include <string>
 #include <array>
+
+// SR: Added online data augmentation in Transform(...)
+// including: 
+// random rotation
+// random resizing
+// random aspect ratio
+// random shear
+// random non linear distrotions 
+
+
+// SR: fixed a test phase bug in older version of Caffe.
+
 namespace caffe {
 
 

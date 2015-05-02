@@ -1,5 +1,8 @@
 syntax = "proto2";
 
+// SR: added fields to control online data augmentation
+
+
 package caffe;
 
 message BlobProto {
@@ -353,12 +356,12 @@ message TransformationParameter {
   // Specify if we would like to randomly crop an image.
   optional uint32 crop_size = 3 [default = 0];
   optional string mean_file = 4;
-  optional bool rotate = 5 [default = false];
-  optional uint32 resize = 6 [default = 0];
-
-  optional bool randsize = 13 [default = false];
-  optional bool distort = 14 [default=false];
-  optional float zoom = 15 [default = 1.0];
+  optional bool rotate = 5 [default = false]; // SR: online rotation
+  optional uint32 resize = 6 [default = 0]; // SR: online resizing
+ 
+  optional bool randsize = 13 [default = false]; // SR: online randomization
+  optional bool distort = 14 [default=false]; // SR: online nonlinear distort
+  optional float zoom = 15 [default = 1.0]; // SR: online zoom
 }
 
 // Message that stores parameters used by AccuracyLayer
